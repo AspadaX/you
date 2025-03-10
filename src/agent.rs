@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{Error, Result};
 use cchain::core::{command::CommandLine, interpreter::Interpreter, traits::{Execution, ExecutionType}};
@@ -55,9 +55,21 @@ impl Agent {
     }
 }
 
+impl Display for Agent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut output_string = String::new();
+        for command_line in self.command_lines.iter() {
+            output_string.push_str(&command_line.to_string());
+        }
+        
+        f.write_str(&format!("{}", output_string))
+    }
+}
+
 impl<T> Execution<T> for Agent 
 where 
-    T: Clone + Send + Sync + 'static,
+    Self: Display,
+    T: Clone + Send + Sync + 'static + Eq + PartialEq
 {
     fn get_execution_type(&self) -> &cchain::core::traits::ExecutionType {
         &ExecutionType::Chain
