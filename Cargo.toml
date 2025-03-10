@@ -1,5 +1,5 @@
 [package]
-name = "done"
+name = "done-rs"
 version = "0.1.0"
 edition = "2024"
 description = "An AI command line execution tool built with Rust"
