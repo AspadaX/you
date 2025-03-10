@@ -8,3 +8,7 @@ breakdown NaturalLanguageToCommands {
   - ask the user for permisson on executions.
   - execute the commands.
 }
+
+objective Save {
+  - Save the commands of a query to a chain file. 
+}
