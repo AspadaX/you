@@ -2,6 +2,11 @@
 name = "done"
 version = "0.1.0"
 edition = "2024"
+description = "An AI-native modern cli automation tool built with Rust"
+authors =  ["Xinyu Bao <baoxinyuworks@163.com>"]
+readme = "README.md"
+repository = "https://github.com/aspadax/done"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0.97"
