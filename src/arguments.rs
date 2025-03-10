@@ -23,4 +23,22 @@ pub struct Arguments {
 }
 
 #[derive(Debug, Subcommand)]
-pub enum Commands {}
+pub enum Commands {
+    /// Run a command that is described in natural langauge. 
+    /// The LLM will breakdown the task and executes them.
+    Run(RunArguments),
+    /// Display the version of `done`
+    Version(VersionArguments),
+}
+
+#[derive(Debug, Args)]
+#[command(group = clap::ArgGroup::new("sources").required(true).multiple(false))]
+pub struct RunArguments {
+    /// Command or commands in natural language
+    #[arg(group = "sources")]
+    pub command_in_natural_language: String,
+}
+
+#[derive(Debug, Args)]
+#[command(group = clap::ArgGroup::new("sources").required(false).multiple(false))]
+pub struct VersionArguments;
