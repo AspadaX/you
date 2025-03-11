@@ -7,6 +7,7 @@ use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::CreateChatCompletionResponse;
 use async_openai::Client;
 
+#[derive(Debug)]
 pub struct LLM {
     model: String,
     client: Client<OpenAIConfig>

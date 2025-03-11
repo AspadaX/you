@@ -1,9 +1,15 @@
 use std::{collections::HashMap, fmt::Display};
 
-use anyhow::{Error, Result};
-use cchain::core::{command::CommandLine, interpreter::Interpreter, traits::{Execution, ExecutionType}};
+use anyhow::{anyhow, Error, Result};
+use cchain::{commons::utility::input_message, core::{command::CommandLine, interpreter::Interpreter, traits::Execution}};
+use serde::{Deserialize, Serialize};
 
 use crate::llm::LLM;
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BreakdownCommands {
+    commands: Vec<CommandLine>,
+}
 
 /// An agent that is for breaking down the command,
 /// intepret into a series of command line arguments, 
@@ -31,7 +37,7 @@ impl Agent {
     
     /// Breakdown the user's command into a series of command line arguments.
     pub fn breakdown(&mut self) -> Result<(), Error> {
-        let mut example_env_var = HashMap::new();
+        let mut example_env_var: HashMap<String, String> = HashMap::new();
         example_env_var.insert("EXAMPLE".to_string(), "this is a value".to_string());
         
         let command_line_template = CommandLine::new(
@@ -42,14 +48,39 @@ impl Agent {
             Some("/path/to/working/directory".to_string())
         );
         
-        let prompt: String = "Please break down the following command sent by the user: "
-            .to_string() + &self.user_query + "\n This is your template, output in json:" + &command_line_template.to_string();
+        let prompt: String = "Please break down the following command sent by the user in a json array: "
+            .to_string() + &self.user_query + &format!(
+                "\n This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:", 
+                &serde_json::to_string_pretty(&command_line_template)?
+            );
         
-        let result: Vec<CommandLine> = serde_json::from_str(
-            &self.llm.generate_json(prompt)?
-        )?;
+        let response: String = self.llm.generate_json(prompt)?;
         
-        self.command_lines = result;
+        let result: BreakdownCommands = serde_json::from_str(&response).unwrap();
+        
+        self.command_lines = result.commands;
+        
+        Ok(())
+    }
+    
+    pub fn execute(&mut self) -> Result<(), anyhow::Error> {
+        for command in &mut self.command_lines {
+            let user_input: String = input_message(
+                &format!(
+                    "Are you okay with executing the following command: {} (y/n)", 
+                    command
+                )
+            )?;
+            
+            if &user_input == "y" {
+                command.execute()?;
+                continue;
+            }
+            
+            if &user_input == "n" {
+                return Err(anyhow!("Execution rejected"));
+            }
+        }
         
         Ok(())
     }
@@ -63,23 +94,5 @@ impl Display for Agent {
         }
         
         f.write_str(&format!("{}", output_string))
-    }
-}
-
-impl<T> Execution<T> for Agent 
-where 
-    Self: Display,
-    T: Clone + Send + Sync + 'static + Eq + PartialEq
-{
-    fn get_execution_type(&self) -> &cchain::core::traits::ExecutionType {
-        &ExecutionType::Chain
-    }
-    
-    fn execute(&mut self) -> anyhow::Result<Vec<T>, anyhow::Error> {
-        for command in &mut self.command_lines {
-            command.execute()?;
-        }
-        
-        Ok(vec![])
     }
 }

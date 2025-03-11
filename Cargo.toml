@@ -11,7 +11,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0.97"
 async-openai = "0.28.0"
-cchain = "0.3.1"
+cchain = { git = "https://github.com/AspadaX/cchain", branch = "main" }
 clap = { version = "4.5.31", features = ["derive"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
