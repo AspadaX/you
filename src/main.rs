@@ -21,7 +21,5 @@ fn main() -> Result<(), Error> {
         }
     }
     
-    println!("Hello, world!");
-    
     Ok(())
 }

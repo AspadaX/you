@@ -70,7 +70,7 @@ impl Agent {
                     "Are you okay with executing the following command: {} (y/n)", 
                     command
                 )
-            )?;
+            )?.trim().to_string();
             
             if &user_input == "y" {
                 command.execute()?;
