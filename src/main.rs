@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use cchain::display_control::{display_message, Level};
 use clap::Parser;
-use done_rs::{agent::Agent, arguments::{Arguments, Commands}};
+use eai::{agent::Agent, arguments::{Arguments, Commands}};
 
 fn main() -> Result<(), Error> {
     let arguments = Arguments::parse();
