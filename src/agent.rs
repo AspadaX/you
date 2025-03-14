@@ -66,7 +66,7 @@ impl Agent {
         
         let prompt: String = "Please break down the following command sent by the user in a json array: "
             .to_string() + &self.user_query + &format!(
-                "\n {}This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\nAdditional notes: - You don't need to specifiy a working directory if you don't have a clue. In that case, just leave the working directory be null", 
+                "\n {}This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\nAdditional notes: - You don't need to specifiy a working directory if you don't have a clue. In that case, just leave the working directory be null. - if you need to prompt the user for additional input, please encapsulate the variable in <<>>", 
                 system_information,
                 &serde_json::to_string_pretty(&command_line_template)?
             );
