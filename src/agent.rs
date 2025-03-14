@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use anyhow::{anyhow, Error, Result};
 use cchain::{commons::utility::input_message, core::{command::CommandLine, interpreter::Interpreter, traits::Execution}};
 use serde::{Deserialize, Serialize};
+use sysinfo::System;
 
 use crate::llm::LLM;
 
@@ -48,9 +49,25 @@ impl Agent {
             Some("/path/to/working/directory".to_string())
         );
         
+        let required_information: Vec<&str> = vec![
+            "system", "kernel_version", "os_version", "host_name"
+        ];
+        // Feed the system information as a background knowledge
+        let mut system_information = String::new();
+        for information in required_information {
+            match information {
+                "system" => system_information.push_str(&format!("System: {}\n", System::name().unwrap())),
+                "kernel_version" => system_information.push_str(&format!("Kernel Version: {}\n", System::kernel_version().unwrap())),
+                "os_version" => system_information.push_str(&format!("OS Version: {}\n", System::os_version().unwrap())),
+                "host_name" => system_information.push_str(&format!("Host Name: {}\n", System::host_name().unwrap())),
+                _ => {}
+            }
+        }
+        
         let prompt: String = "Please break down the following command sent by the user in a json array: "
             .to_string() + &self.user_query + &format!(
-                "\n This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:", 
+                "\n {}This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\nAdditional notes: - You don't need to specifiy a working directory if you don't have a clue. In that case, just leave the working directory be null", 
+                system_information,
                 &serde_json::to_string_pretty(&command_line_template)?
             );
         
