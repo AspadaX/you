@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{anyhow, Error, Result};
-use cchain::{commons::utility::input_message, core::{command::CommandLine, interpreter::Interpreter, traits::Execution}};
+use cchain::{commons::utility::input_message, core::{chain::Chain, command::CommandLine, interpreter::Interpreter, traits::Execution}, variable::Variable};
 use serde::{Deserialize, Serialize};
 use sysinfo::System;
 
@@ -90,6 +90,25 @@ impl Agent {
             )?.trim().to_string();
             
             if &user_input == "y" {
+                // First, we need to check if there are variables in the command
+                let mut variables: Vec<Variable> = Vec::new();
+                for string in command.get_arguments() {
+                    let mut command_variables: Vec<Variable> = Variable::parse_variables_from_str(
+                        string, 0
+                    )?;
+                    for variable in command_variables.iter_mut() {
+                        let value: String = input_message(
+                            &format!("{}", variable.get_human_readable_name())
+                        )?
+                            .trim()
+                            .to_string();
+                        
+                        variable.register_value(value);
+                    }
+                    
+                    variables.extend(command_variables);
+                }
+                
                 command.execute()?;
                 continue;
             }
