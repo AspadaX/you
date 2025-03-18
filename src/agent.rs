@@ -1,11 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{anyhow, Error, Result};
-use cchain::{commons::utility::input_message, core::{chain::Chain, command::CommandLine, interpreter::Interpreter, traits::Execution}, variable::Variable};
+use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestUserMessageArgs};
+use cchain::{commons::utility::input_message, core::{command::CommandLine, interpreter::Interpreter, traits::Execution}, variable::Variable};
 use serde::{Deserialize, Serialize};
 use sysinfo::System;
 
-use crate::llm::LLM;
+use crate::llm::{Context, LLM};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BreakdownCommands {
@@ -23,6 +24,8 @@ pub struct Agent {
     command_lines: Vec<CommandLine>,
     /// LLM client
     llm: LLM,
+    /// LLM context
+    context: Vec<ChatCompletionRequestMessage>
 }
 
 impl Agent {
@@ -32,6 +35,7 @@ impl Agent {
                 user_query,
                 command_lines: vec![],
                 llm: LLM::new()?,
+                context: vec![],
             }
         )
     }
@@ -130,5 +134,24 @@ impl Display for Agent {
         }
         
         f.write_str(&format!("{}", output_string))
+    }
+}
+
+impl Context for Agent {
+    fn add(&mut self, role: async_openai::types::Role, content: String) -> Result<(), Error> {
+        match role {
+            async_openai::types::Role::User => Ok(self.context.push(ChatCompletionRequestUserMessageArgs::default().content(content).build()?.into())),
+            async_openai::types::Role::System => Ok(self.context.push(ChatCompletionRequestUserMessageArgs::default().content(content).build()?.into())),
+            async_openai::types::Role::Assistant => Ok(self.context.push(ChatCompletionRequestUserMessageArgs::default().content(content).build()?.into())),
+            _ => Err(anyhow!("Invalid role")),
+        }
+    }
+    
+    fn clear(&mut self) -> Result<(), Error> {
+        Ok(self.context.clear())
+    }
+    
+    fn get_context(&self) -> &Vec<ChatCompletionRequestMessage> {
+        &self.context
     }
 }

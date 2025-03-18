@@ -1,10 +1,7 @@
 use anyhow::anyhow;
 use anyhow::{Error, Result};
-use async_openai::config::OpenAIConfig;
-use async_openai::types::{ChatCompletionRequestMessageContentPartTextArgs, ResponseFormat};
-use async_openai::types::ChatCompletionRequestUserMessageArgs;
-use async_openai::types::CreateChatCompletionRequestArgs;
-use async_openai::types::CreateChatCompletionResponse;
+use async_openai::types::ChatCompletionRequestMessage;
+use async_openai::{config::OpenAIConfig, types::{ChatCompletionRequestMessageContentPartTextArgs, ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ResponseFormat, Role}, Chat};
 use async_openai::Client;
 
 #[derive(Debug)]
@@ -101,4 +98,13 @@ impl LLM {
 
         Ok(result)
     }
+}
+
+/// A context for storing messages.
+pub trait Context {
+    fn add(&mut self, role: Role, content: String) -> Result<(), Error>;
+    
+    fn clear(&mut self) -> Result<(), Error>;
+    
+    fn get_context(&self) -> &Vec<ChatCompletionRequestMessage>;
 }
