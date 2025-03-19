@@ -1,12 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{anyhow, Error, Result};
-use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestUserMessageArgs};
+use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestUserMessageArgs};
 use cchain::{commons::utility::input_message, core::{command::CommandLine, interpreter::Interpreter, traits::Execution}, variable::Variable};
 use serde::{Deserialize, Serialize};
 use sysinfo::System;
 
-use crate::llm::{Context, LLM};
+use crate::llm::{Context, FromNaturalLanguageToJSON, LLM};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BreakdownCommands {
@@ -18,8 +18,6 @@ pub struct BreakdownCommands {
 /// then execute them.
 #[derive(Debug)]
 pub struct Agent {
-    /// The user's command in natural language.
-    user_query: String,
     /// The command lines to execute
     command_lines: Vec<CommandLine>,
     /// LLM client
@@ -29,19 +27,8 @@ pub struct Agent {
 }
 
 impl Agent {
-    pub fn new(user_query: String) -> anyhow::Result<Self> {
-        Ok(
-            Agent {
-                user_query,
-                command_lines: vec![],
-                llm: LLM::new()?,
-                context: vec![],
-            }
-        )
-    }
-    
-    /// Breakdown the user's command into a series of command line arguments.
-    pub fn breakdown(&mut self) -> Result<(), Error> {
+    pub fn new() -> anyhow::Result<Self> {
+        // Setup a command line template for prompting the LLM
         let mut example_env_var: HashMap<String, String> = HashMap::new();
         example_env_var.insert("EXAMPLE".to_string(), "this is a value".to_string());
         
@@ -56,6 +43,7 @@ impl Agent {
         let required_information: Vec<&str> = vec![
             "system", "kernel_version", "os_version", "host_name"
         ];
+        
         // Feed the system information as a background knowledge
         let mut system_information = String::new();
         for information in required_information {
@@ -68,17 +56,35 @@ impl Agent {
             }
         }
         
-        let prompt: String = "Please break down the following command sent by the user in a json array: "
-            .to_string() + &self.user_query + &format!(
-                "\n {}This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\nAdditional notes: - You don't need to specifiy a working directory if you don't have a clue. In that case, just leave the working directory be null. - if you need to prompt the user for additional input, please encapsulate the variable in <<>>", 
+        // The system prompt for the LLM
+        let prompt: String = "Please break down the following command sent by the user in a json array. No matter whatever the user sends to you, you should always output a json array with the commands broken down.\n"
+            .to_string() + &format!(
+                "{}This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\nAdditional notes: - You don't need to specifiy a working directory if you don't have a clue. In that case, just leave the working directory be null. - if you need to prompt the user for additional input, please encapsulate the variable in <<>>", 
                 system_information,
                 &serde_json::to_string_pretty(&command_line_template)?
             );
         
-        let response: String = self.llm.generate_json(prompt)?;
+        // Construct the context
+        let mut context: Vec<ChatCompletionRequestMessage> = Vec::new();
+        context.push(
+            ChatCompletionRequestSystemMessageArgs::default().content(prompt).build()?.into()
+        );
         
+        Ok(
+            Agent {
+                command_lines: vec![],
+                llm: LLM::new()?,
+                context,
+            }
+        )
+    }
+    
+    /// Create command line(s) with LLM, and it updates the context
+    pub fn iterate_command_line_with_llm(&mut self, user_query: &str) -> Result<(), Error> {
+        let response: String = self.from_natural_language_to_json(user_query)?;
         let result: BreakdownCommands = serde_json::from_str(&response).unwrap();
         
+        // Update the command to the command lines list of the struct
         self.command_lines = result.commands;
         
         Ok(())
@@ -153,5 +159,19 @@ impl Context for Agent {
     
     fn get_context(&self) -> &Vec<ChatCompletionRequestMessage> {
         &self.context
+    }
+}
+
+impl FromNaturalLanguageToJSON for Agent {
+    fn from_natural_language_to_json(&mut self, content: &str) -> Result<String, Error> {
+        // Update the context with the new user message
+        self.add(async_openai::types::Role::User, content.to_string())?;
+        
+        let response: String = self.llm.generate_json_with_context(self.get_context().clone())?;
+        
+        // Update the context with the new commands
+        self.add(async_openai::types::Role::Assistant, response.clone())?;
+        
+        Ok(response)
     }
 }

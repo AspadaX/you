@@ -8,13 +8,15 @@ fn main() -> Result<(), Error> {
     
     match arguments.commands {
         Commands::Run(subcommand) => {
-            let mut agent = Agent::new(
-                subcommand.command_in_natural_language
-            )?;
+            let mut agent = Agent::new()?;
+            let mut round_number: usize = 0;
             
             loop {
+                // Use the user query provided in the `run` argument for the first round
                 display_message(Level::Logging, "LLM is coming up commands...");
-                agent.breakdown()?;
+                if round_number == 0 {
+                    agent.iterate_command_line_with_llm(&subcommand.command_in_natural_language)?;
+                }
                 
                 match agent.execute() {
                     Ok(_) => {
