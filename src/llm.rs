@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use anyhow::{Error, Result};
 use async_openai::types::ChatCompletionRequestMessage;
-use async_openai::{config::OpenAIConfig, types::{ChatCompletionRequestMessageContentPartTextArgs, ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ResponseFormat, Role}, Chat};
+use async_openai::{config::OpenAIConfig, types::{ChatCompletionRequestMessageContentPartTextArgs, ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ResponseFormat, Role}};
 use async_openai::Client;
 
 #[derive(Debug)]
@@ -140,5 +140,5 @@ pub trait Context {
 
 /// A trait for converting natural language to JSON.
 pub trait FromNaturalLanguageToJSON {
-    fn from_natural_language_to_json(&mut self, content: &str) -> Result<String, Error>;
+    fn from_natural_language_to_json(&mut self) -> Result<String, Error>;
 }
