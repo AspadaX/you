@@ -1,11 +1,11 @@
 [package]
-name = "eai"
-version = "0.1.0"
+name = "you"
+version = "0.1.1"
 edition = "2024"
-description = "An AI command line execution tool built with Rust"
+description = "Translate your natural language into executable command(s)"
 authors =  ["Xinyu Bao <baoxinyuworks@163.com>"]
 readme = "README.md"
-repository = "https://github.com/aspadax/done"
+repository = "https://github.com/aspadax/you"
 license = "MIT"
 
 [dependencies]
