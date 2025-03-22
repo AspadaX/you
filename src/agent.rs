@@ -4,9 +4,8 @@ use anyhow::{anyhow, Error, Result};
 use async_openai::types::{ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestUserMessageArgs};
 use cchain::{commons::utility::input_message, core::{command::{CommandLine, CommandLineExecutionResult}, interpreter::Interpreter, traits::Execution}, variable::Variable};
 use serde::{Deserialize, Serialize};
-use sysinfo::System;
 
-use crate::llm::{Context, FromNaturalLanguageToJSON, LLM};
+use crate::{information::{get_available_commands, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}};
 
 pub trait Step {
     /// Executes the next step of the agent's workflow.
@@ -52,29 +51,43 @@ impl SemiAutonomousCommandLineAgent {
             Some("/path/to/working/directory".to_string())
         );
         
-        let required_information: Vec<&str> = vec![
-            "system", "kernel_version", "os_version", "host_name"
-        ];
-        
-        // Feed the system information as a background knowledge
-        let mut system_information = String::new();
-        for information in required_information {
-            match information {
-                "system" => system_information.push_str(&format!("System: {}\n", System::name().unwrap())),
-                "kernel_version" => system_information.push_str(&format!("Kernel Version: {}\n", System::kernel_version().unwrap())),
-                "os_version" => system_information.push_str(&format!("OS Version: {}\n", System::os_version().unwrap())),
-                "host_name" => system_information.push_str(&format!("Host Name: {}\n", System::host_name().unwrap())),
-                _ => {}
-            }
-        }
+        let system_information: String = get_system_information();
+        let available_commands: String = get_available_commands();
         
         // The system prompt for the LLM
-        let prompt: String = "Please break down the following command sent by the user in a json array. No matter whatever the user sends to you, you should always output a json array with the commands broken down.\n"
-            .to_string() + &format!(
-                "{}This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\nAdditional notes: - You don't need to specifiy a working directory if you don't have a clue. In that case, just leave the working directory be null. - if you need to prompt the user for additional input, please encapsulate the variable in <<>>", 
-                system_information,
+        let mut prompt: String = "Please break down the following command sent by the user in a json array. No matter whatever the user sends to you, you should always output a json array with the commands broken down.\n"
+            .to_string();
+        
+        // Inject the system information
+        prompt.push_str("Environment:\n");
+        prompt.push_str(&system_information);
+        prompt.push_str("Current Working Directory: ");
+        prompt.push_str(std::env::current_dir()?.to_str().unwrap());
+        prompt.push_str("\n");
+        
+        // Provide available commands
+        prompt.push_str("Available Commands Aside from System Built-Ins:\n");
+        prompt.push_str(&available_commands);
+        
+        // Inject the template to the prompt
+        prompt.push_str(
+            &format!(
+                "This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\n", 
                 &serde_json::to_string_pretty(&command_line_template)?
-            );
+            )
+        );
+        
+        // Additional instructions
+        prompt.push_str("\nAdditional instructions:");
+        prompt.push_str(
+            "- In case you don't know the working directoy, or there is no need for having a working directoy, you should leave it be null."
+        );
+        prompt.push_str(
+            "- If you need to prompt the user for additional input, please encapsulate the variable in <<>>"
+        );
+        prompt.push_str(
+            "- The `interpreter` now only supports sh/Sh. Also, you should leave it be null if you don't need an interpreter."
+        );
         
         // Construct the context
         let mut context: Vec<ChatCompletionRequestMessage> = Vec::new();

@@ -12,9 +12,9 @@ pub struct LLM {
 
 impl LLM {
     pub fn new() -> Result<Self, Error> {
-        let api_base: String = std::env::var("DONE_OPENAI_API_BASE")?;
-        let api_key: String = std::env::var("DONE_OPENAI_API_KEY")?;
-        let model: String = std::env::var("DONE_OPENAI_MODEL")?;
+        let api_base: String = std::env::var("DONE_OPENAI_API_BASE").or_else(|_| std::env::var("YOU_OPENAI_API_BASE"))?;
+        let api_key: String = std::env::var("DONE_OPENAI_API_KEY").or_else(|_| std::env::var("YOU_OPENAI_API_KEY"))?;
+        let model: String = std::env::var("DONE_OPENAI_MODEL").or_else(|_| std::env::var("YOU_OPENAI_MODEL"))?;
 
         let llm_configuration: OpenAIConfig = OpenAIConfig::default()
             .with_api_key(api_key)
