@@ -9,17 +9,18 @@ use crate::{information::{get_available_commands, get_system_information}, llm::
 
 pub trait Step {
     /// Executes the next step of the agent's workflow.
-    fn next_step(&mut self, user_query: &str) -> Result<Vec<&CommandLine>, Error>;
+    fn next_step(&mut self, user_query: &str) -> Result<CommandJSON, Error>;
 }
 
 pub trait Executable {
     /// Executes the next step of the agent's workflow.
-    fn execute(&mut self) -> Result<(), Error>;
+    fn execute(&mut self, command: &mut CommandJSON) -> Result<(), Error>;
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct BreakdownCommands {
-    commands: Vec<CommandLine>,
+pub struct CommandJSON {
+    pub explanation: String,
+    pub command: CommandLine,
 }
 
 /// An agent that is for breaking down the command,
@@ -28,7 +29,7 @@ pub struct BreakdownCommands {
 #[derive(Debug)]
 pub struct SemiAutonomousCommandLineAgent {
     /// The command lines to execute
-    command_lines: Vec<CommandLine>,
+    command_line_to_execute: Option<CommandLine>,
     /// LLM client
     llm: LLM,
     /// LLM context
@@ -50,12 +51,17 @@ impl SemiAutonomousCommandLineAgent {
             Some(example_env_var), 
             Some("/path/to/working/directory".to_string())
         );
+        let command_json_template = CommandJSON {
+            explanation: "explain the command and its arguments briefly. three lines maximum.".to_string(),
+            command: command_line_template,
+        };
         
         let system_information: String = get_system_information();
         let available_commands: String = get_available_commands();
         
         // The system prompt for the LLM
-        let mut prompt: String = "Please break down the following command sent by the user in a json array. No matter whatever the user sends to you, you should always output a json array with the commands broken down.\n"
+        let mut prompt: String = "Please translate the following command sent by the user to an executable command in a json. 
+            No matter whatever the user sends to you, you should always output a json with the command translated.\n"
             .to_string();
         
         // Inject the system information
@@ -72,8 +78,8 @@ impl SemiAutonomousCommandLineAgent {
         // Inject the template to the prompt
         prompt.push_str(
             &format!(
-                "This is your template, output in json array, which means that you should put your broken down commands in {{'commands': [{}]}}:\n", 
-                &serde_json::to_string_pretty(&command_line_template)?
+                "This is your template, output in json: {}:\n", 
+                &serde_json::to_string_pretty(&command_json_template)?
             )
         );
         
@@ -97,7 +103,7 @@ impl SemiAutonomousCommandLineAgent {
         
         Ok(
             SemiAutonomousCommandLineAgent {
-                command_lines: vec![],
+                command_line_to_execute: None,
                 llm: LLM::new()?,
                 context,
                 previous_turn_outputs: vec![],
@@ -107,32 +113,31 @@ impl SemiAutonomousCommandLineAgent {
 }
 
 impl Executable for SemiAutonomousCommandLineAgent {
-    fn execute(&mut self) -> Result<(), Error> {
+    fn execute(&mut self, command: &mut CommandJSON) -> Result<(), Error> {
         let mut outputs: Vec<CommandLineExecutionResult> = Vec::new();
-        for command in &mut self.command_lines {
-            // We need to check if there are variables in the command
-            // before executing the command
-            let mut variables: Vec<Variable> = Vec::new();
-            for string in command.get_arguments() {
-                let mut command_variables: Vec<Variable> = Variable::parse_variables_from_str(
-                    string, 0
-                )?;
-                for variable in command_variables.iter_mut() {
-                    let value: String = input_message(
-                        &format!("{}", variable.get_human_readable_name())
-                    )?
-                        .trim()
-                        .to_string();
-                    
-                    variable.register_value(value);
-                }
+        
+        // We need to check if there are variables in the command
+        // before executing the command
+        let mut variables: Vec<Variable> = Vec::new();
+        for string in command.command.get_arguments() {
+            let mut command_variables: Vec<Variable> = Variable::parse_variables_from_str(
+                string, 0
+            )?;
+            for variable in command_variables.iter_mut() {
+                let value: String = input_message(
+                    &format!("{}", variable.get_human_readable_name())
+                )?
+                    .trim()
+                    .to_string();
                 
-                variables.extend(command_variables);
+                variable.register_value(value);
             }
             
-            let result: Vec<CommandLineExecutionResult> = command.execute()?;
-            outputs.extend(result);
+            variables.extend(command_variables);
         }
+        
+        let result: Vec<CommandLineExecutionResult> = command.command.execute()?;
+        outputs.extend(result);
         
         // Collect outputs
         self.previous_turn_outputs = outputs;
@@ -142,32 +147,20 @@ impl Executable for SemiAutonomousCommandLineAgent {
 }
 
 impl Step for SemiAutonomousCommandLineAgent {
-    fn next_step(&mut self, user_query: &str) -> Result<Vec<&CommandLine>, Error> {
+    fn next_step(&mut self, user_query: &str) -> Result<CommandJSON, Error> {
         // Update the context by adding the user query
         self.add(async_openai::types::Role::User, user_query.to_string())?;
         
         let response: String = self.from_natural_language_to_json()?;
-        let result: BreakdownCommands = serde_json::from_str(&response).unwrap();
+        let result: CommandJSON = serde_json::from_str(&response).unwrap();
         
-        // Update the command to the command lines list of the struct
-        self.command_lines = result.commands;
-        
-        Ok(
-            self.command_lines.iter()
-                .map(|command_line| command_line)
-                .collect()
-        )
+        Ok(result)
     }
 }
 
 impl Display for SemiAutonomousCommandLineAgent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut output_string = String::new();
-        for command_line in self.command_lines.iter() {
-            output_string.push_str(&command_line.to_string());
-        }
-        
-        f.write_str(&format!("{}", output_string))
+        f.write_str(&format!("{}", self.command_line_to_execute.as_ref().unwrap().to_string()))
     }
 }
 

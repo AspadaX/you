@@ -2,13 +2,17 @@ mod information;
 mod arguments;
 mod llm;
 mod agent;
+mod styles;
+
+use std::time::Duration;
 
 use anyhow::{Error, Result};
-use cchain::{commons::utility::input_message, core::command::CommandLine, display_control::{display_message, Level}};
+use cchain::{commons::utility::input_message, display_control::{display_message, Level}};
 use clap::{Parser, crate_version, crate_authors, crate_description, crate_name};
-use agent::{Executable, SemiAutonomousCommandLineAgent, Step};
+use agent::{CommandJSON, Executable, SemiAutonomousCommandLineAgent, Step};
 use arguments::{Arguments, Commands};
 use llm::Context;
+use styles::start_spinner;
 
 fn main() -> Result<(), Error> {
     let arguments = Arguments::parse();
@@ -22,37 +26,38 @@ fn main() -> Result<(), Error> {
             let mut error_message_in_previous_round = String::new();
             loop {
                 // Initialize an empty vector to store command lines
-                let command_lines: Vec<&CommandLine>;
+                let mut command_json: CommandJSON;
                 
                 // Use the user query provided in the `run` argument for the first round
+                let spinner = start_spinner("LLM is thinking...".to_string());
                 if is_first_round {
                     is_first_round = false;
-                    display_message(Level::Logging, "LLM is thinking...");
-                    command_lines = agent.next_step(
+                    
+                    command_json = agent.next_step(
                         &subcommand.command_in_natural_language
                     )?;
+                    
+                    spinner.finish_and_clear();
                 } else {
                     if error_message_in_previous_round != "" {
-                        display_message(Level::Logging, "Error message received, LLM is thinking...");
-                        command_lines = agent.next_step(&error_message_in_previous_round)?;
+                        command_json = agent.next_step(&error_message_in_previous_round)?;
                         error_message_in_previous_round.clear();
+                        spinner.finish_and_clear();
                     } else {
-                        display_message(Level::Logging, "LLM is thinking...");
-                        command_lines = agent.next_step(&user_input_in_previous_round)?;
+                        command_json = agent.next_step(&user_input_in_previous_round)?;
                         user_input_in_previous_round.clear();
+                        spinner.finish_and_clear();
                     }
                 }
                 
-                let command_lines_text: String = command_lines.iter()
-                    .map(|command| "    > ".to_string() + command.to_string().as_str())
-                    .collect::<Vec<String>>()
-                    .join("\n");
+                let command_lines_text: String = "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
+                let command_lines_explanation: String = "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
                 let user_input: String = input_message(
-                    &format!("Execute the following command(s)? (y for yes, or type to hint LLM)\n{}", command_lines_text)
+                    &format!("Execute the following command? (y for yes, or type to hint LLM)\n{}{}", command_lines_text, command_lines_explanation)
                 )?;
                 
                 if user_input.trim() == "y" {
-                    match agent.execute() {
+                    match agent.execute(&mut command_json) {
                         Ok(_) => {
                             display_message(Level::Logging, "Commands had been executed successfully.");
                             break;

@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::process::{Command, Output};
 
 use sysinfo::System;
 
@@ -23,28 +23,23 @@ pub fn get_system_information() -> String {
 }
 
 pub fn get_available_commands() -> String {
-    let available_commands: String = if cfg!(target_os = "windows") {
+    let output: Output = if cfg!(target_os = "windows") {
         // Windows system: use 'where' command to list available commands
-        let output = Command::new("cmd")
+        Command::new("cmd")
             .args(&["/C", "where", "/Q", "*"])
             .output()
-            .expect("Failed to execute command");
-        String::from_utf8_lossy(&output.stdout)
-            .lines()
-            .map(|s| s.to_string())
-            .collect()
+            .expect("Failed to execute command")
     } else {
         // Unix system: use 'compgen -c' to list available commands
-        let output = Command::new("sh")
+        Command::new("sh")
             .arg("-c")
             .arg("compgen -c")
             .output()
-            .expect("Failed to execute command");
-        String::from_utf8_lossy(&output.stdout)
-            .lines()
-            .map(|s| s.to_string())
-            .collect()
+            .expect("Failed to execute command")
     };
 
-    available_commands
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(|s| s.to_string() + "\n")
+        .collect()
 }
