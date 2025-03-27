@@ -52,7 +52,7 @@ impl SemiAutonomousCommandLineAgent {
             Some("/path/to/working/directory".to_string())
         );
         let command_json_template = CommandJSON {
-            explanation: "explain the command and its arguments briefly. three lines maximum.".to_string(),
+            explanation: "explain the command and its arguments briefly. one line maximum.".to_string(),
             command: command_line_template,
         };
         
