@@ -32,15 +32,20 @@ The tool will:
 ## Examples
 
 ```bash
-# Organize files
-you run "organize my downloads folder by file type"
+# Recall commands that you had forgotten
+you run "check out what has been imported in this Rust project"
 
-# Find system information
-you run "show me system resource usage"
+# Don't know what to look after?
+you run "how many cores does this system have?"
 
-# Complex data processing
-you run "extract the second column from my CSV file and count unique values"
+# Even open up a SSH terminal for you
+you run "open a new window with an SSH terminal to xxx.xxx.xxx.xxx as root"
 ```
+
+## Tips
+
+- So far as I tested, `you` works well with a small model called `smollm2` and its smallest version, 135m. 
+- You may also use `ollama` with any open source model you want for free.
 
 ## Workflow
 
