@@ -2,10 +2,10 @@ use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{anyhow, Error, Result};
 use async_openai::types::{ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestUserMessageArgs};
-use cchain::{commons::utility::input_message, core::{command::{CommandLine, CommandLineExecutionResult}, interpreter::Interpreter, traits::Execution}, variable::Variable};
+use cchain::{commons::utility::input_message, core::{command::{CommandLine, CommandLineExecutionResult}, interpreter::Interpreter, traits::Execution}, display_control::display_tree_message, variable::Variable};
 use serde::{Deserialize, Serialize};
 
-use crate::{information::{get_available_commands, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}};
+use crate::{information::{get_available_commands, get_current_directory_structure, get_current_time, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}};
 
 pub trait Step {
     /// Executes the next step of the agent's workflow.
@@ -58,6 +58,8 @@ impl SemiAutonomousCommandLineAgent {
         
         let system_information: String = get_system_information();
         let available_commands: String = get_available_commands();
+        let current_time: String = get_current_time();
+        let current_working_directory_structure: String = get_current_directory_structure();
         
         // The system prompt for the LLM
         let mut prompt: String = "Please translate the following command sent by the user to an executable command in a json. 
@@ -69,6 +71,12 @@ impl SemiAutonomousCommandLineAgent {
         prompt.push_str(&system_information);
         prompt.push_str("Current Working Directory: ");
         prompt.push_str(std::env::current_dir()?.to_str().unwrap());
+        prompt.push_str("\n");
+        prompt.push_str("Current Working Directory Sturcture: ");
+        prompt.push_str(&current_working_directory_structure);
+        prompt.push_str("\n");
+        prompt.push_str("Current Date and Time: ");
+        prompt.push_str(&current_time);
         prompt.push_str("\n");
         
         // Provide available commands
@@ -151,8 +159,17 @@ impl Step for SemiAutonomousCommandLineAgent {
         // Update the context by adding the user query
         self.add(async_openai::types::Role::User, user_query.to_string())?;
         
-        let response: String = self.from_natural_language_to_json()?;
-        let result: CommandJSON = serde_json::from_str(&response).unwrap();
+        let result: CommandJSON = loop {
+            let response: String = self.from_natural_language_to_json()?;
+            
+            match serde_json::from_str(&response) {
+                Ok(command) => break command,
+                Err(_) => {
+                    display_tree_message(2, "LLM returned a wrong JSON, retrying...");
+                    continue;
+                }
+            }
+        };
         
         Ok(result)
     }

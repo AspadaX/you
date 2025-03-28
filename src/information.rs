@@ -1,5 +1,6 @@
 use std::process::{Command, Output};
 
+use chrono::Local;
 use sysinfo::System;
 
 pub fn get_system_information() -> String {
@@ -42,4 +43,22 @@ pub fn get_available_commands() -> String {
         .lines()
         .map(|s| s.to_string() + "\n")
         .collect()
+}
+
+pub fn get_current_time() -> String {
+    let now: chrono::DateTime<Local> = Local::now();
+    format!("{}\n", now.format("%Y-%m-%d %H:%M:%S"))
+}
+
+pub fn get_current_directory_structure() -> String {
+    let current_dir: std::path::PathBuf = std::env::current_dir().unwrap();
+    let mut dir_structure = String::new();
+    for entry in std::fs::read_dir(current_dir).unwrap() {
+        let entry: std::fs::DirEntry = entry.unwrap();
+        let metadata: std::fs::Metadata = entry.metadata().unwrap();
+        let file_type: &str = if metadata.is_dir() { "dir" } else { "file" };
+        dir_structure.push_str(&format!("{} {}\n", file_type, entry.file_name().to_string_lossy()));
+    }
+    
+    dir_structure
 }

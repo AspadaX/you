@@ -28,6 +28,7 @@ pub enum Commands {
     /// The LLM will breakdown the task and executes them.
     Run(RunArguments),
     /// Display the version of `done`
+    #[clap(short_flag = 'v')]
     Version(VersionArguments),
 }
 
