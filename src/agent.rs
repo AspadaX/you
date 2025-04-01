@@ -5,7 +5,7 @@ use async_openai::types::{ChatCompletionRequestAssistantMessageArgs, ChatComplet
 use cchain::{commons::utility::input_message, core::{command::{CommandLine, CommandLineExecutionResult}, interpreter::Interpreter, traits::Execution}, display_control::display_tree_message, variable::Variable};
 use serde::{Deserialize, Serialize};
 
-use crate::{information::{get_available_commands, get_current_directory_structure, get_current_time, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}};
+use crate::{information::{get_current_directory_structure, get_current_time, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}};
 
 pub trait Step {
     /// Executes the next step of the agent's workflow.
@@ -55,7 +55,6 @@ impl SemiAutonomousCommandLineAgent {
         };
         
         let system_information: String = get_system_information();
-        let available_commands: String = get_available_commands();
         let current_time: String = get_current_time();
         let current_working_directory_structure: String = get_current_directory_structure();
         
@@ -76,10 +75,6 @@ impl SemiAutonomousCommandLineAgent {
         prompt.push_str("Current Date and Time: ");
         prompt.push_str(&current_time);
         prompt.push_str("\n");
-        
-        // Provide available commands
-        prompt.push_str("Available Commands Aside from System Built-Ins:\n");
-        prompt.push_str(&available_commands);
         
         // Inject the template to the prompt
         prompt.push_str(
