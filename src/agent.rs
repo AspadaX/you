@@ -144,6 +144,14 @@ impl Executable for SemiAutonomousCommandLineAgent {
             variables.extend(command_variables);
         }
         
+        // We need to register the value in the command itself
+        for variable in variables {
+            command.command.inject_value_to_variables(
+                &variable.get_raw_variable_name(), 
+                variable.get_value()?
+            )?;
+        }
+        
         let result: Vec<CommandLineExecutionResult> = command.command.execute()?;
         outputs.extend(result);
         
