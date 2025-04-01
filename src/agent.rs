@@ -34,8 +34,6 @@ pub struct SemiAutonomousCommandLineAgent {
     llm: LLM,
     /// LLM context
     context: Vec<ChatCompletionRequestMessage>,
-    /// Command line outputs in the previous turn
-    previous_turn_outputs: Vec<CommandLineExecutionResult>,
 }
 
 impl SemiAutonomousCommandLineAgent {
@@ -114,7 +112,6 @@ impl SemiAutonomousCommandLineAgent {
                 command_line_to_execute: None,
                 llm: LLM::new()?,
                 context,
-                previous_turn_outputs: vec![],
             }
         )
     }    
@@ -122,8 +119,6 @@ impl SemiAutonomousCommandLineAgent {
 
 impl Executable for SemiAutonomousCommandLineAgent {
     fn execute(&mut self, command: &mut CommandJSON) -> Result<(), Error> {
-        let mut outputs: Vec<CommandLineExecutionResult> = Vec::new();
-        
         // We need to check if there are variables in the command
         // before executing the command
         let mut variables: Vec<Variable> = Vec::new();
@@ -144,11 +139,18 @@ impl Executable for SemiAutonomousCommandLineAgent {
             variables.extend(command_variables);
         }
         
-        let result: Vec<CommandLineExecutionResult> = command.command.execute()?;
-        outputs.extend(result);
+        // We need to register the value in the command itself
+        for variable in variables {
+            command.command.inject_value_to_variables(
+                &variable.get_raw_variable_name(), 
+                variable.get_value()?
+            )?;
+        }
         
-        // Collect outputs
-        self.previous_turn_outputs = outputs;
+        let result: Vec<CommandLineExecutionResult> = command.command.execute()?;
+        
+        // Add the result to the context 
+        self.add(async_openai::types::Role::System, result[0].get_output())?;
         
         Ok(())
     }
