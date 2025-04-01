@@ -62,8 +62,6 @@ fn main() -> Result<(), Error> {
                         }
                     };
                 }
-                
-                println!("{:?}", agent.get_context());
             }
         },
         Commands::Version(_) => {
