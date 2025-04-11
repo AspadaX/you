@@ -1,5 +1,5 @@
 use anyhow::{Result, Error};
-use cchain::{commons::utility::input_message, display_control::{display_message, Level}};
+use cchain::{commons::utility::input_message, core::program::Program, display_control::{display_message, Level}};
 use indicatif::ProgressBar;
 
 use crate::{agent::{CommandJSON, Executable, SemiAutonomousCommandLineAgent, Step}, llm::Context, styles::start_spinner};
@@ -42,6 +42,14 @@ pub fn process_run_with_one_single_instruction(command_in_natural_language: &str
             match agent.execute(&mut command_json) {
                 Ok(_) => {
                     display_message(Level::Logging, "Commands had been executed successfully.");
+                    
+                    // Prompt the user for saving the command 
+                    let save_chain_input: String = input_message("Would you like to save the command to a chain? (n for no, type anything to name the chain)")?;
+                    if save_chain_input.trim() == "n" {
+                        break;
+                    }
+                    
+                    save_to_chain(save_chain_input.trim(), &mut vec![command_json])?;
                     break;
                 },
                 Err(error) => {
@@ -57,6 +65,7 @@ pub fn process_run_with_one_single_instruction(command_in_natural_language: &str
 pub fn process_interactive_mode() -> Result<(), Error> {
     let mut agent = SemiAutonomousCommandLineAgent::new()?;
     
+    let mut commands: Vec<CommandJSON> = Vec::new();
     let mut user_query: String = input_message("Yes, boss. What can I do for you:")?;
     loop {
         // Initialize an empty vector to store command lines
@@ -83,8 +92,31 @@ pub fn process_interactive_mode() -> Result<(), Error> {
         if user_query.trim() == "y" {
             match agent.execute(&mut command_json) {
                 Ok(_) => {
+                    // Store the command
+                    commands.push(command_json);
+                    
                     display_message(Level::Logging, "Commands had been executed successfully.");
-                    user_query = input_message("Boss, what else can I do for you:")?;
+                    
+                    user_query = input_message("Boss, what else can I do for you (type to instruct, e to exit, or enter w to save the commands so far):")?;
+                    
+                    if user_query.trim() == "e" {
+                        break;
+                    }
+                    
+                    if user_query.trim() == "w" {
+                        let name: String = input_message("Name of the chain:")?;
+                        save_to_chain(name.trim(), &mut commands)?;
+                        
+                        let user_feedback: String = input_message("Continue? (y for yes, e for exit):")?;
+                        
+                        if user_feedback.trim() == "e" {
+                            break;
+                        }
+                        
+                        if user_feedback.trim() == "y" {
+                            user_query = input_message("Boss, what else can I do for you (type to instruct):")?;
+                        }
+                    }
                 },
                 Err(error) => {
                     display_message(Level::Error, &error.to_string());
@@ -97,6 +129,35 @@ pub fn process_interactive_mode() -> Result<(), Error> {
             break;
         }
     }
+    
+    Ok(())
+}
+
+fn save_to_chain(chain_name: &str, commands: &mut Vec<CommandJSON>) -> Result<(), Error> {
+    let mut chain: Vec<Program> = Vec::new();
+    
+    for command in commands.iter_mut() {
+        let program = Program::new(
+            command.command.get_command().to_string(), 
+            command.command.get_arguments().to_owned(), 
+            None, 
+            None, 
+            None, 
+            Default::default(), 
+            None, 
+            Default::default(), 
+            None, 
+            0
+        );
+        
+        chain.push(program);
+    }
+    
+    let filepath: &str = &format!("./cchain_{}.json", chain_name);
+    let serialized_chain: String = serde_json::to_string_pretty(&chain)?;
+    std::fs::write(filepath, serialized_chain)?;
+    
+    display_message(Level::Logging, &format!("Chain had been saved to {}.", filepath));
     
     Ok(())
 }
