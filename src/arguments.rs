@@ -33,11 +33,11 @@ pub enum Commands {
 }
 
 #[derive(Debug, Args)]
-#[command(group = clap::ArgGroup::new("sources").required(true).multiple(false))]
+#[command(group = clap::ArgGroup::new("sources").required(false).multiple(false))]
 pub struct RunArguments {
-    /// Command or commands in natural language
+    /// Convert natural language instruction to an executable command. Leave it empty to run interactive mode. 
     #[arg(group = "sources")]
-    pub command_in_natural_language: String,
+    pub command_in_natural_language: Option<String>,
 }
 
 #[derive(Debug, Args)]
