@@ -18,6 +18,7 @@ fn main() -> Result<(), Error> {
         Commands::Run(subcommand) => {
             if let Some(command_in_natural_language) = subcommand.command_in_natural_language {
                 process_run_with_one_single_instruction(&command_in_natural_language)?;
+                return Ok(());
             }
             
             process_interactive_mode()?;
