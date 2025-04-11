@@ -152,13 +152,37 @@ impl Executable for SemiAutonomousCommandLineAgent {
 }
 
 impl Step for SemiAutonomousCommandLineAgent {
+    /// Executes the next step in the agent's workflow by processing the user's query.
+    ///
+    /// This function updates the context with the user's query, sends it to the LLM for processing,
+    /// and attempts to parse the LLM's response into a `CommandJSON` object. If the LLM returns
+    /// an invalid JSON, the function retries until a valid JSON is received.
+    /// 
+    /// It will automatically update the context with the user query. 
+    ///
+    /// # Arguments
+    ///
+    /// * `user_query` - A string slice containing the user's query to be processed.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the parsed `CommandJSON` object if successful, or an `Error` if an issue occurs.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut agent = SemiAutonomousCommandLineAgent::new().unwrap();
+    /// let user_query = "List all files in the current directory";
+    /// let command_json = agent.next_step(user_query).unwrap();
+    /// println!("Generated Command: {:?}", command_json);
+    /// ```
     fn next_step(&mut self, user_query: &str) -> Result<CommandJSON, Error> {
         // Update the context by adding the user query
         self.add(async_openai::types::Role::User, user_query.to_string())?;
-        
+
         let result: CommandJSON = loop {
             let response: String = self.from_natural_language_to_json()?;
-            
+
             match serde_json::from_str(&response) {
                 Ok(command) => break command,
                 Err(_) => {
@@ -167,7 +191,7 @@ impl Step for SemiAutonomousCommandLineAgent {
                 }
             }
         };
-        
+
         Ok(result)
     }
 }
