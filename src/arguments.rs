@@ -13,11 +13,11 @@ const STYLES: Styles = Styles::styled()
     .placeholder(AnsiColor::Cyan.on_default());
 
 #[derive(Debug, Parser)]
-#[command(name = "done", author = crate_authors!(), long_version = crate_version!())]
+#[command(name = "you", author = crate_authors!(), long_version = crate_version!())]
 #[command(about = crate_description!())]
 #[command(styles = STYLES)]
 pub struct Arguments {
-    /// Grouped features provided by `done`
+    /// Grouped features provided by `you`
     #[clap(subcommand)]
     pub commands: Commands
 }
@@ -27,7 +27,7 @@ pub enum Commands {
     /// Run a command that is described in natural langauge. 
     /// The LLM will breakdown the task and executes them.
     Run(RunArguments),
-    /// Display the version of `done`
+    /// Display the version of `you`
     #[clap(short_flag = 'v')]
     Version(VersionArguments),
 }

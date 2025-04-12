@@ -11,6 +11,27 @@
 
 ## Installation
 
+### Setup Script
+You may download [this](./setup.sh) shell script to install `you`. This is supported on both Linux and macOS platforms. 
+First, you need to grant execution priviliges to the script:
+```bash
+chmod +x ./setup.sh
+```
+Then, execute it:
+```bash
+./setup.sh
+```
+You may also uninstall `you` with [this](./uninstall.sh) script. You should also grant execution priviliges to the script first. 
+```bash
+chmod +x ./uninstall.sh
+```
+Then, execute it:
+```bash
+./uninstall.sh
+```
+
+### Cargo
+
 ```bash
 cargo install you
 ```
