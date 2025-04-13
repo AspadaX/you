@@ -63,10 +63,12 @@ you run "how many cores does this system have?"
 you run "open a new window with an SSH terminal to xxx.xxx.xxx.xxx as root"
 ```
 
-Also you may enter an interactive mode by continuous prompting the LLM for generating commands. This is useful when you would like to perform several tasks at a time. 
+If you would like to continually prompt the LLM without losing the context, you may run the below command to enter the interactive mode. This is useful when you would like to perform several tasks at a time. 
 ```bash
 you run
 ```
+
+You may also would like to save the command(s) generated. `you` will prompt you for whether to save the commands when it is ready. A chain file can be executed by [cchain](https://github.com/AspadaX/cchain), which means that you can reuse the same set of commands without prompting the LLM again and again. 
 
 ## Tips
 
