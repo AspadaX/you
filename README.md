@@ -63,6 +63,11 @@ you run "how many cores does this system have?"
 you run "open a new window with an SSH terminal to xxx.xxx.xxx.xxx as root"
 ```
 
+Also you may enter an interactive mode by continuous prompting the LLM for generating commands. This is useful when you would like to perform several tasks at a time. 
+```bash
+you run
+```
+
 ## Tips
 
 - So far as I tested, `you` works well with a small model called `smollm2` and its smallest version, 135m. 
