@@ -77,4 +77,27 @@ echo "Installing you to $INSTALL_DIR..."
 sudo mv -f "$BIN_PATH" "$INSTALL_DIR/you"
 sudo chmod +x "$INSTALL_DIR/you"
 
+# Assist the user to setup required environment variables
+read -p "Use default OpenAI endpoint? (y for yes, or paste your api endpoint here): " ENDPOINT
+if [[ "$ENDPOINT" == "y" ]]; then
+    ENDPOINT="https://api.openai.com"
+fi
+
+read -p "API key:" api_key
+read -p "Model:" model
+
+if [ -n "$ZSH_VERSION" ]; then
+  PROFILE_FILE=~/.zshrc
+elif [ -n "$BASH_VERSION" ]; then
+  PROFILE_FILE=~/.bashrc
+else
+  PROFILE_FILE=~/.profile
+fi
+
+echo "export YOU_OPENAI_API_BASE=\"$endpoint\"" >> $PROFILE_FILE
+echo "export YOU_OPENAI_API_KEY=\"$api_key\"" >> $PROFILE_FILE
+echo "export YOU_OPENAI_MODEL=\"$model\"" >> $PROFILE_FILE
+source $PROFILE_FILE
+echo "Environment variable has been set. You may find them has been added here: $PROFILE_FILE"
+
 echo "Successfully installed you $(you --version)"
