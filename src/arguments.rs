@@ -1,8 +1,10 @@
 use clap::{
+    Args, Parser, Subcommand,
     builder::{
-        styling::{AnsiColor, Effects},
         Styles,
-    }, crate_authors, crate_version, crate_description, Args, Parser, Subcommand
+        styling::{AnsiColor, Effects},
+    },
+    crate_authors, crate_description, crate_version,
 };
 
 // Configures Clap v3-style help menu colors
@@ -19,14 +21,16 @@ const STYLES: Styles = Styles::styled()
 pub struct Arguments {
     /// Grouped features provided by `you`
     #[clap(subcommand)]
-    pub commands: Commands
+    pub commands: Commands,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    /// Run a command that is described in natural langauge. 
+    /// Run a command that is described in natural langauge.
     /// The LLM will breakdown the task and executes them.
     Run(RunArguments),
+    /// Explain a given command
+    Explain(ExplainArguments),
     /// Display the version of `you`
     #[clap(short_flag = 'v')]
     Version(VersionArguments),
@@ -35,9 +39,17 @@ pub enum Commands {
 #[derive(Debug, Args)]
 #[command(group = clap::ArgGroup::new("sources").required(false).multiple(false))]
 pub struct RunArguments {
-    /// Convert natural language instruction to an executable command. Leave it empty to run interactive mode. 
+    /// Convert natural language instruction to an executable command. Leave it empty to run interactive mode.
     #[arg(group = "sources")]
     pub command_in_natural_language: Option<String>,
+}
+
+#[derive(Debug, Args)]
+#[command(group = clap::ArgGroup::new("sources").required(true).multiple(false))]
+pub struct ExplainArguments {
+    /// Convert natural language instruction to an executable command. Leave it empty to run interactive mode.
+    #[arg(group = "sources")]
+    pub command: String,
 }
 
 #[derive(Debug, Args)]

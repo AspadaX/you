@@ -4,22 +4,28 @@ use chrono::Local;
 use sysinfo::System;
 
 pub fn get_system_information() -> String {
-    let required_information: Vec<&str> = vec![
-        "system", "kernel_version", "os_version", "host_name"
-    ];
-    
+    let required_information: Vec<&str> =
+        vec!["system", "kernel_version", "os_version", "host_name"];
+
     // Feed the system information as a background knowledge
     let mut system_information = String::new();
     for information in required_information {
         match information {
-            "system" => system_information.push_str(&format!("System: {}\n", System::name().unwrap())),
-            "kernel_version" => system_information.push_str(&format!("Kernel Version: {}\n", System::kernel_version().unwrap())),
-            "os_version" => system_information.push_str(&format!("OS Version: {}\n", System::os_version().unwrap())),
-            "host_name" => system_information.push_str(&format!("Host Name: {}\n", System::host_name().unwrap())),
+            "system" => {
+                system_information.push_str(&format!("System: {}\n", System::name().unwrap()))
+            }
+            "kernel_version" => system_information.push_str(&format!(
+                "Kernel Version: {}\n",
+                System::kernel_version().unwrap()
+            )),
+            "os_version" => system_information
+                .push_str(&format!("OS Version: {}\n", System::os_version().unwrap())),
+            "host_name" => system_information
+                .push_str(&format!("Host Name: {}\n", System::host_name().unwrap())),
             _ => {}
         }
     }
-    
+
     system_information
 }
 
@@ -57,8 +63,12 @@ pub fn get_current_directory_structure() -> String {
         let entry: std::fs::DirEntry = entry.unwrap();
         let metadata: std::fs::Metadata = entry.metadata().unwrap();
         let file_type: &str = if metadata.is_dir() { "dir" } else { "file" };
-        dir_structure.push_str(&format!("{} {}\n", file_type, entry.file_name().to_string_lossy()));
+        dir_structure.push_str(&format!(
+            "{} {}\n",
+            file_type,
+            entry.file_name().to_string_lossy()
+        ));
     }
-    
+
     dir_structure
 }

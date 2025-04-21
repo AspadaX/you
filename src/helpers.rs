@@ -1,145 +1,174 @@
-use anyhow::{Result, Error};
-use cchain::{commons::utility::input_message, display_control::{display_message, Level}};
+use anyhow::{Error, Result};
+use cchain::{
+    commons::utility::input_message,
+    display_control::{Level, display_message},
+};
 use indicatif::ProgressBar;
 
-use crate::{agent::{CommandJSON, Executable, SemiAutonomousCommandLineAgent, Step}, llm::Context, styles::start_spinner};
+use crate::{
+    agents::{command_json::CommandJSON, semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent, traits::Step},
+    llm::Context,
+    styles::start_spinner,
+};
 
-pub fn process_run_with_one_single_instruction(command_in_natural_language: &str) -> Result<(), Error> {
+pub fn process_run_with_one_single_instruction(
+    command_in_natural_language: &str,
+) -> Result<(), Error> {
     let mut agent = SemiAutonomousCommandLineAgent::new()?;
     let mut is_first_round: bool = true;
-    
+
     let mut user_prompt = String::new();
     loop {
         // Initialize an empty vector to store command lines
         let mut command_json: CommandJSON;
-        
+
         // Use the user query provided in the `run` argument for the first round
         let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
         if is_first_round {
             is_first_round = false;
-            command_json = agent.next_step(
-                &command_in_natural_language
-            )?;
+            command_json = agent.next_step(&command_in_natural_language)?;
         } else {
             command_json = agent.next_step(&user_prompt)?;
         }
-        
+
         // Clear the spinner
         spinner.finish_and_clear();
-        
+
         // For prompting the LLM and the user
-        let command_lines_text: String = "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
-        let command_lines_explanation: String = "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
-        
+        let command_lines_text: String =
+            "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
+        let command_lines_explanation: String =
+            "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
+
         // Register the user's input
-        user_prompt = input_message(
-            &format!("Execute the following command? (y for yes, or type to hint LLM)\n{}{}", command_lines_text, command_lines_explanation)
-        )?;
+        user_prompt = input_message(&format!(
+            "Execute the following command? (y for yes, or type to hint LLM)\n{}{}",
+            command_lines_text, command_lines_explanation
+        ))?;
         // we add the command lines to the agent's memory
-        agent.add(async_openai::types::Role::Assistant, format!("{}{}", command_lines_text, command_lines_explanation))?;
-        
+        agent.add(
+            async_openai::types::Role::Assistant,
+            format!("{}{}", command_lines_text, command_lines_explanation),
+        )?;
+
         if user_prompt.trim() == "y" {
             match agent.execute(&mut command_json) {
                 Ok(_) => {
                     display_message(Level::Logging, "Commands had been executed successfully.");
-                    
-                    // Prompt the user for saving the command 
-                    let save_shell_input: String = input_message("Would you like to save the command to a chain? (n for no, type anything to name the chain)")?;
+
+                    // Prompt the user for saving the command
+                    let save_shell_input: String = input_message(
+                        "Would you like to save the command to a chain? (n for no, type anything to name the chain)",
+                    )?;
                     if save_shell_input.trim() == "n" {
                         break;
                     }
-                    
+
                     save_to_shell(save_shell_input.trim(), &mut command_json)?;
                     break;
-                },
+                }
                 Err(error) => {
                     display_message(Level::Error, &error.to_string());
                 }
             };
         }
     }
-    
+
     Ok(())
 }
 
 pub fn process_interactive_mode() -> Result<(), Error> {
     let mut agent = SemiAutonomousCommandLineAgent::new()?;
-    
+
     let mut commands: CommandJSON;
     let mut user_query: String = input_message("Yes, boss. What can I do for you:")?;
     loop {
         // Initialize an empty vector to store command lines
         let mut command_json: CommandJSON;
-        
-        // Use the user query for generate a command 
+
+        // Use the user query for generate a command
         let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
         command_json = agent.next_step(&user_query)?;
-        
+
         // Clear the spinner
         spinner.finish_and_clear();
-        
+
         // For prompting the LLM and the user
-        let command_lines_text: String = "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
-        let command_lines_explanation: String = "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
-        
+        let command_lines_text: String =
+            "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
+        let command_lines_explanation: String =
+            "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
+
         // Register the user's input
-        user_query = input_message(
-            &format!("Execute the following command? (y for yes, e for exit, or type to hint LLM)\n{}{}", command_lines_text, command_lines_explanation)
-        )?;
+        user_query = input_message(&format!(
+            "Execute the following command? (y for yes, e for exit, or type to hint LLM)\n{}{}",
+            command_lines_text, command_lines_explanation
+        ))?;
         // we add the command lines to the agent's memory
-        agent.add(async_openai::types::Role::Assistant, format!("{}{}", command_lines_text, command_lines_explanation))?;
-        
+        agent.add(
+            async_openai::types::Role::Assistant,
+            format!("{}{}", command_lines_text, command_lines_explanation),
+        )?;
+
         if user_query.trim() == "y" {
             match agent.execute(&mut command_json) {
                 Ok(_) => {
                     // Store the command
                     commands = command_json;
-                    
+
                     display_message(Level::Logging, "Commands had been executed successfully.");
-                    
-                    user_query = input_message("Boss, what else can I do for you (type to instruct, e to exit, or enter w to save the commands so far):")?;
-                    
+
+                    user_query = input_message(
+                        "Boss, what else can I do for you (type to instruct, e to exit, or enter w to save the commands so far):",
+                    )?;
+
                     if user_query.trim() == "e" {
                         break;
                     }
-                    
+
                     if user_query.trim() == "w" {
                         let name: String = input_message("Name of the chain:")?;
                         save_to_shell(name.trim(), &mut commands)?;
-                        
-                        let user_feedback: String = input_message("Continue? (y for yes, e for exit):")?;
-                        
+
+                        let user_feedback: String =
+                            input_message("Continue? (y for yes, e for exit):")?;
+
                         if user_feedback.trim() == "e" {
                             break;
                         }
-                        
+
                         if user_feedback.trim() == "y" {
-                            user_query = input_message("Boss, what else can I do for you (type to instruct):")?;
+                            user_query = input_message(
+                                "Boss, what else can I do for you (type to instruct):",
+                            )?;
                         }
                     }
-                },
+                }
                 Err(error) => {
                     display_message(Level::Error, &error.to_string());
                 }
             };
         }
-        
+
         if user_query.trim() == "e" {
             display_message(Level::Logging, "See you boss.");
             break;
         }
     }
-    
+
     Ok(())
 }
 
 fn save_to_shell(shell_name: &str, commands: &mut CommandJSON) -> Result<(), Error> {
     let mut file_content: String = String::from("#!/usr/bin/env sh\n");
     file_content.push_str(commands.get_commands());
-    
+
     let filepath: &str = &format!("./{}.sh", shell_name);
     std::fs::write(filepath, file_content)?;
-    display_message(Level::Logging, &format!("Shell had been saved to {}.", filepath));
-    
+    display_message(
+        Level::Logging,
+        &format!("Shell had been saved to {}.", filepath),
+    );
+
     Ok(())
 }
