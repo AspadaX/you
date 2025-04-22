@@ -9,7 +9,7 @@ use anyhow::{Error, Result};
 use arguments::{Arguments, Commands};
 use cchain::display_control::{Level, display_message};
 use clap::{Parser, crate_authors, crate_description, crate_name, crate_version};
-use helpers::{process_interactive_mode, process_run_with_one_single_instruction};
+use helpers::{process_explanation_with_one_single_instruction, process_interactive_mode, process_run_with_one_single_instruction};
 
 fn main() -> Result<(), Error> {
     let arguments = Arguments::parse();
@@ -23,7 +23,9 @@ fn main() -> Result<(), Error> {
 
             process_interactive_mode()?;
         }
-        Commands::Explain(subcommand) => {}
+        Commands::Explain(subcommand) => {
+            process_explanation_with_one_single_instruction(&subcommand.command)?;
+        }
         Commands::Version(_) => {
             display_message(Level::Logging, &format!("{}", crate_name!()));
             display_message(Level::Logging, &format!("version.{}", crate_version!()));

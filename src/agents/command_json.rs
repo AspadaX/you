@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use cchain::display_control::{display_command_line, display_message};
 use serde::{Deserialize, Serialize};
 

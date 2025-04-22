@@ -1,12 +1,15 @@
 use anyhow::{Error, Result};
 use cchain::{
     commons::utility::input_message,
-    display_control::{Level, display_message},
+    display_control::{display_message, display_tree_message, Level},
 };
 use indicatif::ProgressBar;
 
 use crate::{
-    agents::{command_json::CommandJSON, semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent, traits::Step},
+    agents::{
+        command_json::CommandJSON, command_line_explain_agent::{CommandExplained, CommandLineExplainAgent},
+        semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent, traits::{AgentExecution, Step},
+    },
     llm::Context,
     styles::start_spinner,
 };
@@ -112,21 +115,27 @@ pub fn process_interactive_mode() -> Result<(), Error> {
 
         if user_query.trim() == "y" {
             match agent.execute(&mut command_json) {
-                Ok(_) => {
+                Ok(result) => {
                     // Store the command
                     commands = command_json;
+                    // Store the output to the user_query
+                    user_query.clear();
+                    user_query.push_str(&format!(
+                        "Here is the previous output of the command/script:\n{}\n\n",
+                        result
+                    ));
 
                     display_message(Level::Logging, "Commands had been executed successfully.");
 
-                    user_query = input_message(
+                    let user_input: String = input_message(
                         "Boss, what else can I do for you (type to instruct, e to exit, or enter w to save the commands so far):",
                     )?;
 
-                    if user_query.trim() == "e" {
+                    if user_input.trim() == "e" {
                         break;
                     }
 
-                    if user_query.trim() == "w" {
+                    if user_input.trim() == "w" {
                         let name: String = input_message("Name of the chain:")?;
                         save_to_shell(name.trim(), &mut commands)?;
 
@@ -138,11 +147,13 @@ pub fn process_interactive_mode() -> Result<(), Error> {
                         }
 
                         if user_feedback.trim() == "y" {
-                            user_query = input_message(
+                            user_query.push_str(&input_message(
                                 "Boss, what else can I do for you (type to instruct):",
-                            )?;
+                            )?);
                         }
                     }
+                    
+                    user_query.push_str(&user_input);
                 }
                 Err(error) => {
                     display_message(Level::Error, &error.to_string());
@@ -156,6 +167,26 @@ pub fn process_interactive_mode() -> Result<(), Error> {
         }
     }
 
+    Ok(())
+}
+
+pub fn process_explanation_with_one_single_instruction(
+    command: &str,
+) -> Result<(), Error> {
+    let mut agent = CommandLineExplainAgent::new()?;
+
+    // Use the user query provided in the `run` argument for the first round
+    let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
+    let command_line_explained = agent.next_step(&command)?;
+
+    // Clear the spinner
+    spinner.finish_and_clear();
+
+    // For prompting the LLM and the user
+    let command_lines_explanation: String = command_line_explained.to_string() + "\n";
+    
+    display_message(Level::Logging, &command_lines_explanation);
+    
     Ok(())
 }
 
