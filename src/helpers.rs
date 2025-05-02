@@ -1,61 +1,71 @@
 use anyhow::{Error, Result};
 use cchain::{
     commons::utility::input_message,
-    display_control::{display_message, display_tree_message, Level},
+    display_control::{display_message, Level},
 };
 use indicatif::ProgressBar;
 
 use crate::{
     agents::{
-        command_json::CommandJSON, command_line_explain_agent::{CommandExplained, CommandLineExplainAgent},
+        command_json::{ActionTypeExecute, LLMActionType}, command_line_explain_agent::CommandLineExplainAgent,
         semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent, traits::{AgentExecution, Step},
     },
     llm::Context,
     styles::start_spinner,
 };
 
+/// Prepares and displays a command prompt to the user, asking for confirmation or additional input
+/// 
+/// # Arguments
+/// * `command_json` - The command JSON containing the command and its explanation
+/// 
+/// # Returns
+/// * `Result<String>` - The user's input response
+pub fn prompt_user_for_command_execution(command_json: &LLMActionType) -> Result<String> {
+    // Get the display prompt from the LLMActionType
+    let prompt = command_json.fetch_display_prompt();
+
+    // Prompt the user for input
+    input_message(&prompt)
+}
+
+fn process_command_interaction(
+    agent: &mut (impl AgentExecution<LLMActionType> + Context + Step<LLMActionType>),
+    user_prompt: &mut String
+) -> Result<LLMActionType, Error> {
+    // Use the user query provided in the `run` argument for the first round
+    let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
+    let command_json: LLMActionType = agent.next_step(&user_prompt)?;
+    // Clear the spinner
+    spinner.finish_and_clear();
+
+    // Update the user prompt based on command type
+    *user_prompt = prompt_user_for_command_execution(&command_json)?;
+
+    // we add the `LLMActionType` to the agent's memory
+    agent.add(
+        async_openai::types::Role::Assistant,
+        format!("{:#?}", command_json),
+    )?;
+
+    Ok(command_json)
+}
+
 pub fn process_run_with_one_single_instruction(
     command_in_natural_language: &str,
 ) -> Result<(), Error> {
-    let mut agent = SemiAutonomousCommandLineAgent::new()?;
-    let mut is_first_round: bool = true;
+    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new()?;
+    let mut user_prompt: String = String::from(command_in_natural_language);
 
-    let mut user_prompt = String::new();
     loop {
-        // Initialize an empty vector to store command lines
-        let mut command_json: CommandJSON;
-
-        // Use the user query provided in the `run` argument for the first round
-        let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
-        if is_first_round {
-            is_first_round = false;
-            command_json = agent.next_step(&command_in_natural_language)?;
-        } else {
-            command_json = agent.next_step(&user_prompt)?;
-        }
-
-        // Clear the spinner
-        spinner.finish_and_clear();
-
-        // For prompting the LLM and the user
-        let command_lines_text: String =
-            "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
-        let command_lines_explanation: String =
-            "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
-
-        // Register the user's input
-        user_prompt = input_message(&format!(
-            "Execute the following command? (y for yes, or type to hint LLM)\n{}{}",
-            command_lines_text, command_lines_explanation
-        ))?;
-        // we add the command lines to the agent's memory
-        agent.add(
-            async_openai::types::Role::Assistant,
-            format!("{}{}", command_lines_text, command_lines_explanation),
+        // Process the command interaction
+        let mut command_json: LLMActionType = process_command_interaction(
+            &mut agent, 
+            &mut user_prompt
         )?;
 
         if user_prompt.trim() == "y" {
-            match agent.execute(&mut command_json) {
+            match command_json.execute() {
                 Ok(_) => {
                     display_message(Level::Logging, "Commands had been executed successfully.");
 
@@ -67,7 +77,10 @@ pub fn process_run_with_one_single_instruction(
                         break;
                     }
 
-                    save_to_shell(save_shell_input.trim(), &mut command_json)?;
+                    // Extract command if it's an Execute action type
+                    if let LLMActionType::Execute(ref mut execute_action) = command_json {
+                        save_to_shell(save_shell_input.trim(), execute_action)?;
+                    }
                     break;
                 }
                 Err(error) => {
@@ -81,43 +94,21 @@ pub fn process_run_with_one_single_instruction(
 }
 
 pub fn process_interactive_mode() -> Result<(), Error> {
-    let mut agent = SemiAutonomousCommandLineAgent::new()?;
-
-    let mut commands: CommandJSON;
+    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new()?;
+    let mut command_store: LLMActionType;
     let mut user_query: String = input_message("Yes, boss. What can I do for you:")?;
+
     loop {
-        // Initialize an empty vector to store command lines
-        let mut command_json: CommandJSON;
-
-        // Use the user query for generate a command
-        let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
-        command_json = agent.next_step(&user_query)?;
-
-        // Clear the spinner
-        spinner.finish_and_clear();
-
-        // For prompting the LLM and the user
-        let command_lines_text: String =
-            "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
-        let command_lines_explanation: String =
-            "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
-
-        // Register the user's input
-        user_query = input_message(&format!(
-            "Execute the following command? (y for yes, e for exit, or type to hint LLM)\n{}{}",
-            command_lines_text, command_lines_explanation
-        ))?;
-        // we add the command lines to the agent's memory
-        agent.add(
-            async_openai::types::Role::Assistant,
-            format!("{}{}", command_lines_text, command_lines_explanation),
+        let mut command_json: LLMActionType = process_command_interaction(
+            &mut agent, 
+            &mut user_query
         )?;
 
         if user_query.trim() == "y" {
-            match agent.execute(&mut command_json) {
+            match command_json.execute() {
                 Ok(result) => {
                     // Store the command
-                    commands = command_json;
+                    command_store = command_json;
                     // Store the output to the user_query
                     user_query.clear();
                     user_query.push_str(&format!(
@@ -137,7 +128,11 @@ pub fn process_interactive_mode() -> Result<(), Error> {
 
                     if user_input.trim() == "w" {
                         let name: String = input_message("Name of the chain:")?;
-                        save_to_shell(name.trim(), &mut commands)?;
+
+                        // Extract command if it's an Execute action type
+                        if let LLMActionType::Execute(ref mut execute_action) = command_store {
+                            save_to_shell(name.trim(), execute_action)?;
+                        }
 
                         let user_feedback: String =
                             input_message("Continue? (y for yes, e for exit):")?;
@@ -152,7 +147,7 @@ pub fn process_interactive_mode() -> Result<(), Error> {
                             )?);
                         }
                     }
-                    
+
                     user_query.push_str(&user_input);
                 }
                 Err(error) => {
@@ -190,9 +185,9 @@ pub fn process_explanation_with_one_single_instruction(
     Ok(())
 }
 
-fn save_to_shell(shell_name: &str, commands: &mut CommandJSON) -> Result<(), Error> {
+fn save_to_shell(shell_name: &str, execute_action: &mut ActionTypeExecute) -> Result<(), Error> {
     let mut file_content: String = String::from("#!/usr/bin/env sh\n");
-    file_content.push_str(commands.get_commands());
+    file_content.push_str(execute_action.get_commands());
 
     let filepath: &str = &format!("./{}.sh", shell_name);
     std::fs::write(filepath, file_content)?;
