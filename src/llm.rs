@@ -3,7 +3,7 @@ use anyhow::{Error, Result};
 use async_openai::Client;
 use async_openai::types::{
     ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestMessage,
-    ChatCompletionRequestSystemMessageArgs,
+    ChatCompletionRequestSystemMessageArgs, CreateChatCompletionRequest,
 };
 use async_openai::{
     config::OpenAIConfig,
@@ -115,7 +115,7 @@ impl LLM {
     ) -> Result<String, Error> {
         let runtime = tokio::runtime::Runtime::new()?;
         let result = runtime.block_on(async {
-            let request = CreateChatCompletionRequestArgs::default()
+            let request: CreateChatCompletionRequest = CreateChatCompletionRequestArgs::default()
                 .model(&self.model)
                 .response_format(ResponseFormat::JsonObject)
                 .messages(context)
@@ -240,9 +240,7 @@ pub trait FromNaturalLanguageToJSON: Context {
     ///
     /// Returns an error if the LLM fails to generate a response or if the response is invalid.
     fn from_natural_language_to_json(&mut self) -> Result<String, Error> {
-        let response: String = self
-            .get_llm()
-            .generate_json_with_context(self.get_context().clone())?;
-        Ok(response)
+        self.get_llm()
+            .generate_json_with_context(self.get_context().clone())
     }
 }

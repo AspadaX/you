@@ -4,7 +4,7 @@ use anyhow::{Error, Result, anyhow};
 use cchain::display_control::{display_command_line, display_message};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CLIToInstall {
     pub cli_name: String,
     pub suggested_installation_command: String,
@@ -21,31 +21,119 @@ impl Default for CLIToInstall {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CommandJSON {
-    pub explanation: String,
-    pub command: String,
-    pub request_additional_information: Option<String>,
-    pub request_clis_to_install: Vec<CLIToInstall>
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(untagged)]
+pub enum LLMActionType {
+    Execute(ActionTypeExecute),
+    RequestInformation(ActionTypeRequestInformation),
 }
 
-impl Default for CommandJSON {
-    fn default() -> Self {
-        Self {
-            explanation: "explain the shell script briefly. one line maximum. "
-                .to_string(),
-            command: "a shell script, preferrably in one line, to execute."
-                .to_string(),
-            request_additional_information: Some(
-                "Describe what information you want the user to add on. Leave it null if you don't need."
-                    .to_string()
-            ),
-            request_clis_to_install: vec![CLIToInstall::default()]
+impl LLMActionType {
+    /// The enum `LLMActionType` represents different types of actions that can be performed by an LLM agent.
+    /// 
+    /// # Variants
+    /// 
+    /// * `Execute` - Executes a shell command with an explanation.
+    /// * `RequestInformation` - Requests additional information from the user.
+    /// * `InstallDependencies` - Handles installation of CLI dependencies.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use crate::agents::command_json::{LLMActionType, ActionTypeExecute};
+    /// 
+    /// // Create an execute action
+    /// let action = LLMActionType::Execute(ActionTypeExecute {
+    ///     command: "ls -la".to_string(),
+    ///     explanation: "List all files in the current directory with details".to_string(),
+    /// });
+    /// 
+    /// // You can use pattern matching to handle different action types
+    /// match action {
+    ///     LLMActionType::Execute(exec) => println!("Command to execute: {}", exec.get_commands()),
+    ///     LLMActionType::RequestInformation(_) => println!("Need more information from user"),
+    ///     LLMActionType::InstallDependencies(_) => println!("Need to install dependencies"),
+    /// }
+    /// ```
+    pub fn get_llm_action_type_prompt_template() -> String {
+        // We use the default impl to fetch their corresponding prompts
+        let execution_template: ActionTypeExecute = ActionTypeExecute::default();
+        let request_information_template: ActionTypeRequestInformation = ActionTypeRequestInformation::default();
+
+        // Convert them into json strings
+        let execution_json: String = serde_json::to_string(&execution_template).unwrap_or_default();
+        let request_information_json: String = serde_json::to_string(&request_information_template).unwrap_or_default();
+        
+        let mut prompt = String::new();
+        prompt.push_str(
+            &format!("To execute a command, you may output: {}", execution_json)
+        );
+        prompt.push_str(
+            &format!("\n\nTo request additional information from the user, you may output: {}", request_information_json)
+        );
+
+        prompt
+    }
+    
+    pub fn execute(&mut self) -> Result<String, Error> {
+        match self {
+            Self::Execute(execute_action) => {
+                // Execute the command using the Execute action type's implementation
+                execute_action.execute()
+            },
+            Self::RequestInformation(_) => {
+                Err(anyhow!("Cannot execute a request for information"))
+            },
+        } 
+    }
+    
+    /// Returns a formatted prompt string based on the action type for display to the user.
+    ///
+    /// This method generates appropriate text prompts for different LLM action types:
+    /// - For `Execute` actions, it creates a command execution confirmation prompt
+    /// - For `RequestInformation` actions, it returns the request for additional information
+    /// - For `InstallDependencies` actions, it lists tools that need installation
+    ///
+    /// # Returns
+    ///
+    /// A `String` containing the formatted prompt to display to the user
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::agents::command_json::{LLMActionType, ActionTypeExecute};
+    ///
+    /// // Create an execute action
+    /// let action = LLMActionType::Execute(ActionTypeExecute {
+    ///     command: "ls -la".to_string(),
+    ///     explanation: "List all files with details".to_string(),
+    /// });
+    ///
+    /// // Get the display prompt
+    /// let prompt = action.fetch_display_prompt();
+    /// assert!(prompt.contains("ls -la"));
+    /// assert!(prompt.contains("List all files with details"));
+    /// ```
+    pub fn fetch_display_prompt(&self) -> String {
+        match self {
+            Self::Execute(execute_action) => {
+                format!("Your input: (y for executing the command, or type to hint LLM)\n    > {}\n        * {}\n", 
+                    execute_action.command, execute_action.explanation)
+            },
+            Self::RequestInformation(request_info) => {
+                request_info.request_additional_information.clone().unwrap_or_default()
+            },
         }
     }
 }
 
-impl CommandJSON {
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ActionTypeExecute {
+    command: String,
+    explanation: String,
+}
+
+impl ActionTypeExecute {
     pub fn execute(&mut self) -> Result<String, Error> {
         let mut command: std::process::Command = if cfg!(target_os = "windows") {
             let mut cmd = std::process::Command::new("cmd");
@@ -139,5 +227,32 @@ impl CommandJSON {
 
     pub fn get_commands(&self) -> &str {
         &self.command
+    }
+}
+
+impl Default for ActionTypeExecute {
+    fn default() -> Self {
+        Self {
+            explanation: "explain the shell script briefly. one line maximum. "
+                .to_string(),
+            command: "a shell script, preferrably in one line, to execute."
+                .to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ActionTypeRequestInformation {
+    request_additional_information: Option<String>,
+}
+
+impl Default for ActionTypeRequestInformation {
+    fn default() -> Self {
+        Self {
+            request_additional_information: Some(
+                "Describe what information you want the user to add on. Leave it null if you don't need."
+                    .to_string()
+            ),
+        }
     }
 }

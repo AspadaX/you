@@ -8,7 +8,7 @@ use crate::{
     llm::{Context, FromNaturalLanguageToJSON, LLM},
 };
 
-use super::{command_json::CommandJSON, traits::{AgentExecution, Step}};
+use super::{command_json::LLMActionType, traits::{AgentExecution, Step}};
 
 /// An agent that is for breaking down the command,
 /// intepret into a series of command line arguments,
@@ -29,7 +29,7 @@ impl SemiAutonomousCommandLineAgent {
         let mut example_env_var: HashMap<String, String> = HashMap::new();
         example_env_var.insert("EXAMPLE".to_string(), "this is a value".to_string());
 
-        let command_json_template: CommandJSON = CommandJSON::default();
+        let command_json_template: String = LLMActionType::get_llm_action_type_prompt_template();
 
         let system_information: String = get_system_information();
         let current_time: String = get_current_time();
@@ -37,7 +37,7 @@ impl SemiAutonomousCommandLineAgent {
 
         // The system prompt for the LLM
         let mut prompt: String = "Please translate the following command sent by the user to an executable sh command/script in a json.
-            If you would like to have additional information to send or receive from the user, please refer to the template below.\n"
+            If you would like to have additional information to send or receive from the user, or perform other actions, please refer to the template below.\n"
             .to_string();
 
         // Inject the system information
@@ -80,7 +80,7 @@ impl SemiAutonomousCommandLineAgent {
     }
 }
 
-impl Step<CommandJSON> for SemiAutonomousCommandLineAgent {}
+impl Step<LLMActionType> for SemiAutonomousCommandLineAgent {}
 
 impl Display for SemiAutonomousCommandLineAgent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -107,8 +107,8 @@ impl FromNaturalLanguageToJSON for SemiAutonomousCommandLineAgent {
     }
 }
 
-impl AgentExecution<CommandJSON> for SemiAutonomousCommandLineAgent {
-    fn execute(&mut self, command: &mut CommandJSON) -> Result<String, Error> {
+impl AgentExecution<LLMActionType> for SemiAutonomousCommandLineAgent {
+    fn execute(&mut self, command: &mut LLMActionType) -> Result<String, Error> {
         command.execute()
     }
 }
