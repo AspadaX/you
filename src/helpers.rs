@@ -30,7 +30,7 @@ pub fn prompt_user_for_command_execution(command_json: &LLMActionType) -> Result
 }
 
 fn process_command_interaction(
-    agent: &mut (impl AgentExecution<LLMActionType> + Context + Step<LLMActionType>),
+    agent: &mut (impl Context + Step<LLMActionType>),
     user_prompt: &mut String
 ) -> Result<LLMActionType, Error> {
     // Use the user query provided in the `run` argument for the first round

@@ -1,5 +1,7 @@
 # You - Your Optimized UNIX (and Windows too)
 
+English | [中文](./README_CN.md)
+
 `you` is a command-line tool that translates natural language instructions into executable shell commands, making command-line operations more accessible and intuitive. It's designed especially for newcomers to command-line interfaces, but also helps experienced users by reducing cognitive load and documentation searches.
 
 ## Core Features
@@ -99,6 +101,23 @@ MIT
 ## Credits
 
 Created by Xinyu Bao
+
+## Acknowledgments
+
+This project would not be possible without these amazing libraries:
+
+- **anyhow**: Error handling made simple and flexible
+- **async-openai**: API client for interacting with OpenAI's language models
+- **cchain**: Command chaining functionality for shell operations
+- **chrono**: Date and time handling with precision
+- **clap**: Command-line argument parsing with a beautiful interface
+- **console**: Terminal text styling and utilities
+- **indicatif**: Progress indicators for command-line applications
+- **serde/serde_json**: Powerful serialization and deserialization framework
+- **sysinfo**: System information gathering across platforms
+- **tokio**: Asynchronous runtime for efficient operations
+
+A big thank you to all the developers who maintain these open-source libraries!
 
 ---
 

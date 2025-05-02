@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fmt::Display};
 
-use anyhow::{Error, Result};
 use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs};
 
 use crate::{
@@ -8,7 +7,7 @@ use crate::{
     llm::{Context, FromNaturalLanguageToJSON, LLM},
 };
 
-use super::{command_json::LLMActionType, traits::{AgentExecution, Step}};
+use super::{command_json::LLMActionType, traits::Step};
 
 /// An agent that is for breaking down the command,
 /// intepret into a series of command line arguments,
@@ -104,11 +103,5 @@ impl Context for SemiAutonomousCommandLineAgent {
 impl FromNaturalLanguageToJSON for SemiAutonomousCommandLineAgent {
     fn get_llm(&self) -> &LLM {
         &self.llm
-    }
-}
-
-impl AgentExecution<LLMActionType> for SemiAutonomousCommandLineAgent {
-    fn execute(&mut self, command: &mut LLMActionType) -> Result<String, Error> {
-        command.execute()
     }
 }

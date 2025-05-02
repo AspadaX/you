@@ -180,10 +180,7 @@ where
 ///     Ok(())
 /// }
 /// ```
-pub trait AgentExecution<T>
-where 
-    for<'de> T: Serialize + Deserialize<'de>
-{
+pub trait AgentExecution {
     /// Executes a given command or task represented by an object of type `T`.
     ///
     /// # Arguments
@@ -228,5 +225,5 @@ where
     ///     Ok(())
     /// }
     /// ```
-    fn execute(&mut self, data: &mut T) -> Result<String, Error>;
+    fn execute(&mut self) -> Result<String, Error>;
 }

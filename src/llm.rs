@@ -8,10 +8,11 @@ use async_openai::types::{
 use async_openai::{
     config::OpenAIConfig,
     types::{
-        ChatCompletionRequestMessageContentPartTextArgs, ChatCompletionRequestUserMessageArgs,
-        CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ResponseFormat, Role,
+        ChatCompletionRequestUserMessageArgs,
+        CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ResponseFormat,
     },
 };
+use tokio::runtime::Runtime;
 
 #[derive(Debug, Clone)]
 pub struct LLM {
@@ -36,85 +37,12 @@ impl LLM {
         Ok(Self { model, client })
     }
 
-    pub fn generate(&self, prompt: String) -> Result<String, Error> {
-        let runtime = tokio::runtime::Runtime::new()?;
-        let result = runtime.block_on(async {
-            let request = CreateChatCompletionRequestArgs::default()
-                .model(&self.model)
-                .messages(vec![
-                    ChatCompletionRequestUserMessageArgs::default()
-                        .content(vec![
-                            ChatCompletionRequestMessageContentPartTextArgs::default()
-                                .text(prompt)
-                                .build()?
-                                .into(),
-                        ])
-                        .build()?
-                        .into(),
-                ])
-                .build()?;
-
-            let response: CreateChatCompletionResponse =
-                match self.client.chat().create(request.clone()).await {
-                    std::result::Result::Ok(response) => response,
-                    Err(e) => {
-                        anyhow::bail!("Failed to execute function: {}", e);
-                    }
-                };
-
-            if let Some(content) = response.choices[0].clone().message.content {
-                return Ok(content);
-            }
-
-            return Err(anyhow!("No response is retrieved from the LLM"));
-        })?;
-
-        Ok(result)
-    }
-
-    pub fn generate_json(&self, prompt: String) -> Result<String, Error> {
-        let runtime = tokio::runtime::Runtime::new()?;
-        let result = runtime.block_on(async {
-            let request = CreateChatCompletionRequestArgs::default()
-                .model(&self.model)
-                .response_format(ResponseFormat::JsonObject)
-                .messages(vec![
-                    ChatCompletionRequestUserMessageArgs::default()
-                        .content(vec![
-                            ChatCompletionRequestMessageContentPartTextArgs::default()
-                                .text(prompt)
-                                .build()?
-                                .into(),
-                        ])
-                        .build()?
-                        .into(),
-                ])
-                .build()?;
-
-            let response: CreateChatCompletionResponse =
-                match self.client.chat().create(request.clone()).await {
-                    std::result::Result::Ok(response) => response,
-                    Err(e) => {
-                        anyhow::bail!("Failed to execute function: {}", e);
-                    }
-                };
-
-            if let Some(content) = response.choices[0].clone().message.content {
-                return Ok(content);
-            }
-
-            return Err(anyhow!("No response is retrieved from the LLM"));
-        })?;
-
-        Ok(result)
-    }
-
     pub fn generate_json_with_context(
         &self,
         context: Vec<ChatCompletionRequestMessage>,
     ) -> Result<String, Error> {
-        let runtime = tokio::runtime::Runtime::new()?;
-        let result = runtime.block_on(async {
+        let runtime: Runtime = tokio::runtime::Runtime::new()?;
+        let result: String = runtime.block_on(async {
             let request: CreateChatCompletionRequest = CreateChatCompletionRequestArgs::default()
                 .model(&self.model)
                 .response_format(ResponseFormat::JsonObject)
@@ -168,6 +96,7 @@ pub trait Context {
         }
     }
 
+    #[allow(dead_code)]
     fn clear(&mut self) -> Result<(), Error> {
         let context: &mut Vec<ChatCompletionRequestMessage> = self.access_context();
         Ok(context.clear())

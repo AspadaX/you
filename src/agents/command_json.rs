@@ -4,6 +4,8 @@ use anyhow::{Error, Result, anyhow};
 use cchain::display_control::{display_command_line, display_message};
 use serde::{Deserialize, Serialize};
 
+use super::traits::AgentExecution;
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CLIToInstall {
     pub cli_name: String,
@@ -83,21 +85,6 @@ impl LLMActionType {
         prompt
     }
     
-    pub fn execute(&mut self) -> Result<String, Error> {
-        match self {
-            Self::Execute(execute_action) => {
-                // Execute the command using the Execute action type's implementation
-                execute_action.execute()
-            },
-            Self::RequestInformation(_) => {
-                Err(anyhow!("Cannot execute a request for information"))
-            },
-            Self::RequestCLIsToInstall(_) => {
-                Err(anyhow!("Cannot execute a request to install CLI tools"))
-            }
-        } 
-    }
-    
     /// Returns a formatted prompt string based on the action type for display to the user.
     ///
     /// This method generates appropriate text prompts for different LLM action types:
@@ -156,14 +143,31 @@ impl LLMActionType {
     }
 }
 
+impl AgentExecution for LLMActionType {
+    fn execute(&mut self) -> Result<String, Error> {
+        match self {
+            Self::Execute(execute_action) => {
+                // Execute the command using the Execute action type's implementation
+                execute_action.execute()
+            },
+            Self::RequestInformation(_) => {
+                Err(anyhow!("Cannot execute a request for information"))
+            },
+            Self::RequestCLIsToInstall(_) => {
+                Err(anyhow!("Cannot execute a request to install CLI tools"))
+            }
+        } 
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ActionTypeExecute {
     command: String,
     explanation: String,
 }
 
-impl ActionTypeExecute {
-    pub fn execute(&mut self) -> Result<String, Error> {
+impl AgentExecution for ActionTypeExecute {
+    fn execute(&mut self) -> Result<String, Error> {
         let mut command: std::process::Command = if cfg!(target_os = "windows") {
             let mut cmd = std::process::Command::new("cmd");
             cmd.args(["/C", &self.command]);
@@ -253,7 +257,9 @@ impl ActionTypeExecute {
 
         Ok(collected_output)
     }
+}
 
+impl ActionTypeExecute {
     pub fn get_commands(&self) -> &str {
         &self.command
     }
