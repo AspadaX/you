@@ -26,6 +26,7 @@ impl Default for CLIToInstall {
 pub enum LLMActionType {
     Execute(ActionTypeExecute),
     RequestInformation(ActionTypeRequestInformation),
+    RequestCLIsToInstall(ActionTypeRequestCLIsToInstall),
 }
 
 impl LLMActionType {
@@ -59,17 +60,24 @@ impl LLMActionType {
         // We use the default impl to fetch their corresponding prompts
         let execution_template: ActionTypeExecute = ActionTypeExecute::default();
         let request_information_template: ActionTypeRequestInformation = ActionTypeRequestInformation::default();
+        let request_clis_template: ActionTypeRequestCLIsToInstall = ActionTypeRequestCLIsToInstall {
+            request_clis_to_install: vec![CLIToInstall::default()]
+        };
 
         // Convert them into json strings
         let execution_json: String = serde_json::to_string(&execution_template).unwrap_or_default();
         let request_information_json: String = serde_json::to_string(&request_information_template).unwrap_or_default();
-        
+        let request_clis_json: String = serde_json::to_string(&request_clis_template).unwrap_or_default();
+
         let mut prompt = String::new();
         prompt.push_str(
             &format!("To execute a command, you may output: {}", execution_json)
         );
         prompt.push_str(
             &format!("\n\nTo request additional information from the user, you may output: {}", request_information_json)
+        );
+        prompt.push_str(
+            &format!("\n\nTo request CLI tools to be installed, you may output: {}", request_clis_json)
         );
 
         prompt
@@ -84,6 +92,9 @@ impl LLMActionType {
             Self::RequestInformation(_) => {
                 Err(anyhow!("Cannot execute a request for information"))
             },
+            Self::RequestCLIsToInstall(_) => {
+                Err(anyhow!("Cannot execute a request to install CLI tools"))
+            }
         } 
     }
     
@@ -123,6 +134,24 @@ impl LLMActionType {
             Self::RequestInformation(request_info) => {
                 request_info.request_additional_information.clone().unwrap_or_default()
             },
+            Self::RequestCLIsToInstall(request_clis) => {
+                let mut prompt = String::new();
+                prompt.push_str("The following CLI tools need to be installed:\n\n");
+
+                for cli in &request_clis.request_clis_to_install {
+                    prompt.push_str(&format!("Tool: {}\n", cli.cli_name));
+                    prompt.push_str(&format!("Installation Command: {}\n", cli.suggested_installation_command));
+
+                    if let Some(notice) = &cli.additional_notices {
+                        prompt.push_str(&format!("Note: {}\n", notice));
+                    }
+
+                    prompt.push_str("\n");
+                }
+
+                prompt.push_str("Please install these tools and then continue.");
+                prompt
+            }
         }
     }
 }
@@ -255,4 +284,9 @@ impl Default for ActionTypeRequestInformation {
             ),
         }
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ActionTypeRequestCLIsToInstall {
+    request_clis_to_install: Vec<CLIToInstall>
 }
