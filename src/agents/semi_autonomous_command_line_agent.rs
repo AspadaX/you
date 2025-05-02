@@ -29,11 +29,7 @@ impl SemiAutonomousCommandLineAgent {
         let mut example_env_var: HashMap<String, String> = HashMap::new();
         example_env_var.insert("EXAMPLE".to_string(), "this is a value".to_string());
 
-        let command_json_template = CommandJSON {
-            explanation: "explain the command and its arguments briefly. one line maximum."
-                .to_string(),
-            command: "a shell script, preferrably in one line, to execute.".to_string(),
-        };
+        let command_json_template: CommandJSON = CommandJSON::default();
 
         let system_information: String = get_system_information();
         let current_time: String = get_current_time();

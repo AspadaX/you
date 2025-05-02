@@ -10,6 +10,17 @@ pub struct CommandJSON {
     pub command: String,
 }
 
+impl Default for CommandJSON {
+    fn default() -> Self {
+        Self {
+            explanation: "explain the shell script briefly. one line maximum. "
+                .to_string(),
+            command: "a shell script, preferrably in one line, to execute."
+                .to_string(),
+        }
+    }
+}
+
 impl CommandJSON {
     pub fn execute(&mut self) -> Result<String, Error> {
         let mut command: std::process::Command = if cfg!(target_os = "windows") {
