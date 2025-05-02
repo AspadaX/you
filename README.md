@@ -1,6 +1,6 @@
 # You - Your Optimized UNIX, but also supports Windows
 
-`you` is a command-line tool that translates natural language instructions into executable shell commands, making command-line operations more accessible and intuitive.
+`you` is a command-line tool that translates natural language instructions into executable shell commands, making command-line operations more accessible and intuitive, especially for beginners in programming and command lines. 
 
 ## Features
 
