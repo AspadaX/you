@@ -14,34 +14,52 @@ use crate::{
     styles::start_spinner,
 };
 
-fn process_command_interaction(
-    agent: &mut (impl AgentExecution<CommandJSON> + Context + Step<CommandJSON>),
-    user_prompt: &mut String
-) -> Result<CommandJSON, Error> {
-    let command_json: CommandJSON;
-    
-    // Use the user query provided in the `run` argument for the first round
-    let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
-    command_json = agent.next_step(&user_prompt)?;
-
-    // Clear the spinner
-    spinner.finish_and_clear();
-
+/// Prepares and displays a command prompt to the user, asking for confirmation or additional input
+/// 
+/// # Arguments
+/// * `command_json` - The command JSON containing the command and its explanation
+/// 
+/// # Returns
+/// * `Result<String>` - The user's input response
+pub fn prompt_user_for_command_execution(command_json: &CommandJSON) -> Result<String> {
     // For prompting the LLM and the user
     let command_lines_text: String =
         "    > ".to_string() + command_json.command.to_string().as_str() + "\n";
     let command_lines_explanation: String =
         "        * ".to_string() + command_json.explanation.to_string().as_str() + "\n";
-
-    // Register the user's input
-    *user_prompt = input_message(&format!(
-        "Execute the following command? (y for yes, or type to hint LLM)\n{}{}",
+    
+    // Prompt the user for input
+    input_message(&format!(
+        "Your input: (y for executing the command, or type to hint LLM)\n{}{}",
         command_lines_text, command_lines_explanation
-    ))?;
-    // we add the command lines to the agent's memory
+    ))
+}
+
+fn process_command_interaction(
+    agent: &mut (impl AgentExecution<CommandJSON> + Context + Step<CommandJSON>),
+    user_prompt: &mut String
+) -> Result<CommandJSON, Error> {
+    // Use the user query provided in the `run` argument for the first round
+    let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
+    let command_json: CommandJSON = agent.next_step(&user_prompt)?;
+    // Clear the spinner
+    spinner.finish_and_clear();
+    
+    // Update the user prompt based on command type
+    match &command_json.request_additional_information {
+        Some(request_additional_information) => {
+            user_prompt.push_str(&input_message(request_additional_information)?);
+        },
+        None => {
+            // For prompting the LLM and the user
+            *user_prompt = prompt_user_for_command_execution(&command_json)?;
+        }
+    }
+
+    // we add the `CommandJSON` to the agent's memory
     agent.add(
         async_openai::types::Role::Assistant,
-        format!("{}{}", command_lines_text, command_lines_explanation),
+        format!("{:#?}", command_json),
     )?;
     
     Ok(command_json)

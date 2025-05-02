@@ -36,8 +36,8 @@ impl SemiAutonomousCommandLineAgent {
         let current_working_directory_structure: String = get_current_directory_structure();
 
         // The system prompt for the LLM
-        let mut prompt: String = "Please translate the following command sent by the user to an executable sh command/script in a json. 
-            No matter whatever the user sends to you, you should always output a json with the command/script translated.\n"
+        let mut prompt: String = "Please translate the following command sent by the user to an executable sh command/script in a json.
+            If you would like to have additional information to send or receive from the user, please refer to the template below.\n"
             .to_string();
 
         // Inject the system information

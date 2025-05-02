@@ -5,9 +5,28 @@ use cchain::display_control::{display_command_line, display_message};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct CLIToInstall {
+    pub cli_name: String,
+    pub suggested_installation_command: String,
+    pub additional_notices: Option<String>
+}
+
+impl Default for CLIToInstall {
+    fn default() -> Self {
+        Self { 
+            cli_name: "The name of the cli that you want the user to install".to_string(), 
+            suggested_installation_command: "Base on the current system platform, suggest a command line for the user to install the tool".to_string(), 
+            additional_notices: Some("Leave a notice if any to the user. Leave it null if you don't have a notice".to_string())
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CommandJSON {
     pub explanation: String,
     pub command: String,
+    pub request_additional_information: Option<String>,
+    pub request_clis_to_install: Vec<CLIToInstall>
 }
 
 impl Default for CommandJSON {
@@ -17,6 +36,11 @@ impl Default for CommandJSON {
                 .to_string(),
             command: "a shell script, preferrably in one line, to execute."
                 .to_string(),
+            request_additional_information: Some(
+                "Describe what information you want the user to add on. Leave it null if you don't need."
+                    .to_string()
+            ),
+            request_clis_to_install: vec![CLIToInstall::default()]
         }
     }
 }
