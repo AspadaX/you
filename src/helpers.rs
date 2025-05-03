@@ -23,7 +23,7 @@ use crate::{
 /// * `Result<String>` - The user's input response
 pub fn prompt_user_for_command_execution(command_json: &LLMActionType) -> Result<String> {
     // Get the display prompt from the LLMActionType
-    let prompt = command_json.fetch_display_prompt();
+    let prompt: String = command_json.fetch_display_prompt();
 
     // Prompt the user for input
     input_message(&prompt)
@@ -63,6 +63,7 @@ pub fn process_run_with_one_single_instruction(
             &mut agent, 
             &mut user_prompt
         )?;
+        println!("{:#?}", agent.get_context());
 
         if user_prompt.trim() == "y" {
             match command_json.execute() {
@@ -84,7 +85,9 @@ pub fn process_run_with_one_single_instruction(
                     break;
                 }
                 Err(error) => {
-                    display_message(Level::Error, &error.to_string());
+                    let error_string: String = error.to_string();
+                    display_message(Level::Error, &error_string);
+                    user_prompt.push_str(&error_string);
                 }
             };
         }

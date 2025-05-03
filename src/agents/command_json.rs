@@ -62,16 +62,14 @@ impl LLMActionType {
         // We use the default impl to fetch their corresponding prompts
         let execution_template: ActionTypeExecute = ActionTypeExecute::default();
         let request_information_template: ActionTypeRequestInformation = ActionTypeRequestInformation::default();
-        let request_clis_template: ActionTypeRequestCLIsToInstall = ActionTypeRequestCLIsToInstall {
-            request_clis_to_install: vec![CLIToInstall::default()]
-        };
+        let request_clis_template: ActionTypeRequestCLIsToInstall = ActionTypeRequestCLIsToInstall::default();
 
         // Convert them into json strings
         let execution_json: String = serde_json::to_string(&execution_template).unwrap_or_default();
         let request_information_json: String = serde_json::to_string(&request_information_template).unwrap_or_default();
         let request_clis_json: String = serde_json::to_string(&request_clis_template).unwrap_or_default();
 
-        let mut prompt = String::new();
+        let mut prompt: String = String::new();
         prompt.push_str(
             &format!("To execute a command, you may output: {}", execution_json)
         );
@@ -79,7 +77,7 @@ impl LLMActionType {
             &format!("\n\nTo request additional information from the user, you may output: {}", request_information_json)
         );
         prompt.push_str(
-            &format!("\n\nTo request CLI tools to be installed, you may output: {}", request_clis_json)
+            &format!("\n\nIf the command is not found, you may output: {}", request_clis_json)
         );
 
         prompt
@@ -119,10 +117,10 @@ impl LLMActionType {
                     execute_action.command, execute_action.explanation)
             },
             Self::RequestInformation(request_info) => {
-                request_info.request_additional_information.clone().unwrap_or_default()
+                request_info.request_additional_information.clone()
             },
             Self::RequestCLIsToInstall(request_clis) => {
-                let mut prompt = String::new();
+                let mut prompt: String = String::new();
                 prompt.push_str("The following CLI tools need to be installed:\n\n");
 
                 for cli in &request_clis.request_clis_to_install {
@@ -278,16 +276,14 @@ impl Default for ActionTypeExecute {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ActionTypeRequestInformation {
-    request_additional_information: Option<String>,
+    request_additional_information: String,
 }
 
 impl Default for ActionTypeRequestInformation {
     fn default() -> Self {
         Self {
-            request_additional_information: Some(
-                "Describe what information you want the user to add on. Leave it null if you don't need."
-                    .to_string()
-            ),
+            request_additional_information: "Describe what information you want the user to add on. "
+                .to_string(),
         }
     }
 }
@@ -295,4 +291,10 @@ impl Default for ActionTypeRequestInformation {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ActionTypeRequestCLIsToInstall {
     request_clis_to_install: Vec<CLIToInstall>
+}
+
+impl Default for ActionTypeRequestCLIsToInstall {
+    fn default() -> Self {
+        Self { request_clis_to_install: vec![CLIToInstall::default()] }
+    }
 }
