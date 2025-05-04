@@ -63,7 +63,6 @@ pub fn process_run_with_one_single_instruction(
             &mut agent, 
             &mut user_prompt
         )?;
-        println!("{:#?}", agent.get_context());
 
         if user_prompt.trim() == "y" {
             match command_json.execute() {
