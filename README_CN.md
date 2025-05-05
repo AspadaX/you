@@ -1,4 +1,4 @@
-# You - 您的优化 UNIX (以及 Windows)
+# You - 自然语言转换命令行工具
 
 [English](./README.md) | 中文
 
@@ -19,6 +19,11 @@
 下载并运行安装脚本：
 ```bash
 curl -O https://raw.githubusercontent.com/AspadaX/you/main/setup.sh && chmod +x ./setup.sh && ./setup.sh && rm ./setup.sh
+```
+
+升级:
+```bash
+curl -O https://raw.githubusercontent.com/AspadaX/you/main/update.sh && chmod +x ./update.sh && ./update.sh && rm ./update.sh
 ```
 
 卸载：
