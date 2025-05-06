@@ -78,7 +78,8 @@ you run "connect to my server at 192.168.*.* and check disk space"
 ## LLM Support
 
 `you` works with various LLMs:
-- Works well with small models like `smollm2` (including the 135m version)
+- Works well with small models like `smollm2`
+- Compatible with OpenAI compatible APIs, such as DeepSeek. 
 - Compatible with `ollama` for using any open-source model for free
 - Configure your preferred model for the best balance of performance and accuracy
 
