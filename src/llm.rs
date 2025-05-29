@@ -9,9 +9,10 @@ use async_openai::{
     config::OpenAIConfig,
     types::{
         ChatCompletionRequestUserMessageArgs,
-        CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ResponseFormat,
+        CreateChatCompletionRequestArgs, CreateChatCompletionResponse,
     },
 };
+use surfing::extract_json_to_string;
 use tokio::runtime::Runtime;
 
 #[derive(Debug, Clone)]
@@ -45,7 +46,6 @@ impl LLM {
         let result: String = runtime.block_on(async {
             let request: CreateChatCompletionRequest = CreateChatCompletionRequestArgs::default()
                 .model(&self.model)
-                .response_format(ResponseFormat::JsonObject)
                 .messages(context)
                 .build()?;
 
@@ -58,7 +58,7 @@ impl LLM {
                 };
 
             if let Some(content) = response.choices[0].clone().message.content {
-                return Ok(content);
+                return Ok(extract_json_to_string(&content).unwrap());
             }
 
             return Err(anyhow!("No response is retrieved from the LLM"));
