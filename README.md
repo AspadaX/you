@@ -122,6 +122,7 @@ This project would not be possible without these amazing libraries:
 - **serde/serde_json**: Powerful serialization and deserialization framework
 - **sysinfo**: System information gathering across platforms
 - **tokio**: Asynchronous runtime for efficient operations
+- **surfing**: Parse JSON out of plain texts
 
 A big thank you to all the developers who maintain these open-source libraries!
 
