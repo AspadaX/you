@@ -71,7 +71,7 @@ pub fn process_run_with_one_single_instruction(
 
                     // Prompt the user for saving the command
                     let save_shell_input: String = input_message(
-                        "Would you like to save the command to a chain? (n for no, type anything to name the chain)",
+                        "Would you like to save the command to a shell script? (n for no, type anything to name the chain)",
                     )?;
                     if save_shell_input.trim() == "n" {
                         break;
