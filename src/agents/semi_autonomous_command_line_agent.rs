@@ -3,8 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs};
 
 use crate::{
-    information::{get_current_directory_structure, get_current_time, get_system_information},
-    llm::{Context, FromNaturalLanguageToJSON, LLM},
+    configurations::Configurations, information::{get_current_directory_structure, get_current_time, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}
 };
 
 use super::{command_json::LLMActionType, traits::Step};
@@ -23,7 +22,7 @@ pub struct SemiAutonomousCommandLineAgent {
 }
 
 impl SemiAutonomousCommandLineAgent {
-    pub fn new() -> anyhow::Result<Self> {
+    pub fn new(configurations: &Configurations) -> anyhow::Result<Self> {
         // Setup a command line template for prompting the LLM
         let mut example_env_var: HashMap<String, String> = HashMap::new();
         example_env_var.insert("EXAMPLE".to_string(), "this is a value".to_string());
@@ -50,6 +49,9 @@ impl SemiAutonomousCommandLineAgent {
         prompt.push_str("\n");
         prompt.push_str("Current Date and Time: ");
         prompt.push_str(&current_time);
+        prompt.push_str("\n");
+        prompt.push_str("User preferred CLIs: ");
+        prompt.push_str(&format!("{}", &configurations.get_preferred_clis()));
         prompt.push_str("\n");
 
         // Inject the template to the prompt
