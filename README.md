@@ -14,22 +14,27 @@ English | [中文](./README_CN.md)
 ## Installation
 
 ### Setup Script (Linux & macOS)
+
 Download and run the setup script:
+
 ```bash
 curl -O https://raw.githubusercontent.com/AspadaX/you/main/setup.sh && chmod +x ./setup.sh && ./setup.sh && rm ./setup.sh
 ```
 
 To update:
+
 ```bash
 curl -O https://raw.githubusercontent.com/AspadaX/you/main/update.sh && chmod +x ./update.sh && ./update.sh && rm ./update.sh
 ```
 
 To uninstall:
+
 ```bash
 curl -O https://raw.githubusercontent.com/AspadaX/you/main/uninstall.sh && chmod +x ./uninstall.sh && ./uninstall.sh && rm ./uninstall.sh
 ```
 
 ### Using Cargo
+
 If you have Rust installed:
 
 ```bash
@@ -39,6 +44,7 @@ cargo install you
 ## Usage
 
 ### Basic Command Execution
+
 Run a command described in natural language:
 
 ```bash
@@ -46,6 +52,7 @@ you run "find the largest file in my downloads directory"
 ```
 
 ### Command Explanation
+
 Get an explanation of what a command does:
 
 ```bash
@@ -53,11 +60,29 @@ you explain "find . -type f -name '*.txt' -size +10M"
 ```
 
 ### Interactive Mode
+
 Start a conversational session to run multiple related commands:
 
 ```bash
 you run
 ```
+
+### Configure your preferred CLI
+
+You may want to use `fd` over `find`, or prefer using a different CLI rather than letting the LLM guess. In this case, you may update the configuration file located at `~/.you/configurations.json`. Below is an example:
+
+```json
+{
+  "preferred_clis": [
+    {
+      "name": "fd",
+      "preferred_for": "search files. and replace find"
+    }
+  ]
+}
+```
+
+Now, `you` will use `fd` over `find` when you issue commands relevant to searching files. 
 
 ## Other Examples
 
@@ -78,8 +103,9 @@ you run "connect to my server at 192.168.*.* and check disk space"
 ## LLM Support
 
 `you` works with various LLMs:
+
 - Works well with small models like `smollm2`
-- Compatible with OpenAI compatible APIs, such as DeepSeek. 
+- Compatible with OpenAI compatible APIs, such as DeepSeek.
 - Compatible with `ollama` for using any open-source model for free
 - Configure your preferred model for the best balance of performance and accuracy
 
@@ -128,4 +154,4 @@ A big thank you to all the developers who maintain these open-source libraries!
 
 ---
 
-*`you` - because command lines should understand you, not the other way around.*
+_`you` - because command lines should understand you, not the other way around._

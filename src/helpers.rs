@@ -9,9 +9,7 @@ use crate::{
     agents::{
         command_json::{ActionTypeExecute, LLMActionType}, command_line_explain_agent::CommandLineExplainAgent,
         semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent, traits::{AgentExecution, Step},
-    },
-    llm::Context,
-    styles::start_spinner,
+    }, configurations::Configurations, llm::Context, styles::start_spinner
 };
 
 /// Prepares and displays a command prompt to the user, asking for confirmation or additional input
@@ -52,9 +50,10 @@ fn process_command_interaction(
 }
 
 pub fn process_run_with_one_single_instruction(
+    configurations: &Configurations,
     command_in_natural_language: &str,
 ) -> Result<(), Error> {
-    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new()?;
+    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new(configurations)?;
     let mut user_prompt: String = String::from(command_in_natural_language);
 
     loop {
@@ -95,8 +94,8 @@ pub fn process_run_with_one_single_instruction(
     Ok(())
 }
 
-pub fn process_interactive_mode() -> Result<(), Error> {
-    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new()?;
+pub fn process_interactive_mode(configurations: &Configurations) -> Result<(), Error> {
+    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new(configurations)?;
     let mut command_store: LLMActionType;
     let mut user_query: String = input_message("Yes, boss. What can I do for you:")?;
 

@@ -189,7 +189,7 @@ impl AgentExecution for ActionTypeExecute {
         );
 
         // Spawn the process
-        let mut child = command
+        let mut child: std::process::Child = command
             .spawn()
             .map_err(|e| anyhow!("Failed to execute command: {}", e))?;
 
@@ -202,8 +202,8 @@ impl AgentExecution for ActionTypeExecute {
         // Spawn a thread to read stdout
         let tx_clone: std::sync::mpsc::Sender<String> = tx.clone();
         std::thread::spawn(move || {
-            let mut reader = std::io::BufReader::new(stdout);
-            let mut buffer = [0; 1024];
+            let mut reader: std::io::BufReader<std::process::ChildStdout> = std::io::BufReader::new(stdout);
+            let mut buffer: [u8; 1024] = [0; 1024];
             loop {
                 match reader.read(&mut buffer) {
                     Ok(0) => break, // EOF
@@ -218,8 +218,8 @@ impl AgentExecution for ActionTypeExecute {
 
         // Spawn a thread to read stderr
         std::thread::spawn(move || {
-            let mut reader = std::io::BufReader::new(stderr);
-            let mut buffer = [0; 1024];
+            let mut reader: std::io::BufReader<std::process::ChildStderr> = std::io::BufReader::new(stderr);
+            let mut buffer: [u8; 1024] = [0; 1024];
             loop {
                 match reader.read(&mut buffer) {
                     Ok(0) => break, // EOF
@@ -232,7 +232,7 @@ impl AgentExecution for ActionTypeExecute {
             }
         });
 
-        let mut collected_output = String::new();
+        let mut collected_output: String = String::new();
         let terminal: console::Term = console::Term::stdout();
         for received in rx {
             display_command_line(&terminal, &received);
@@ -240,7 +240,7 @@ impl AgentExecution for ActionTypeExecute {
         }
 
         // Wait for process completion
-        let status = child
+        let status: std::process::ExitStatus = child
             .wait()
             .map_err(|e| anyhow!("Failed to wait on child process: {}", e))?;
 
