@@ -16,7 +16,9 @@ use helpers::{
     process_run_with_one_single_instruction,
 };
 
-use crate::{configurations::Configurations, information::ContextualInformation};
+use crate::{
+    configurations::Configurations, information::ContextualInformation,
+};
 
 fn main() -> Result<(), Error> {
     let arguments: Arguments = Arguments::parse();
@@ -37,7 +39,10 @@ fn main() -> Result<(), Error> {
             process_interactive_mode(&contextual_information)?;
         }
         Commands::Explain(subcommand) => {
-            process_explanation_with_one_single_instruction(&subcommand.command, &contextual_information)?;
+            process_explanation_with_one_single_instruction(
+                &subcommand.command,
+                &contextual_information,
+            )?;
         }
         Commands::Version(_) => {
             display_message(Level::Logging, &format!("{}", crate_name!()));

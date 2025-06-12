@@ -14,16 +14,14 @@ pub struct ContextualInformation {
 impl ContextualInformation {
     /// Fetches system information and loads configurations using the load() method.
     pub fn new() -> Result<Self> {
-        Ok(
-            Self {
-                system_information: get_system_information(),
-                current_time: get_current_time(),
-                current_directory_structure: get_current_directory_structure(),
-                configurations: Configurations::load()?,
-            }
-        )
+        Ok(Self {
+            system_information: get_system_information(),
+            current_time: get_current_time(),
+            current_directory_structure: get_current_directory_structure(),
+            configurations: Configurations::load()?,
+        })
     }
-    
+
     /// Get the required contextual information for agents:
     /// - System specs
     /// - Current time
@@ -31,7 +29,7 @@ impl ContextualInformation {
     /// - User configurations
     pub fn get_contextual_information(&self) -> Result<String> {
         let mut contextual_information: String = String::new();
-        
+
         // Inject the system information
         contextual_information.push_str("Environment:\n");
         contextual_information.push_str(&self.system_information);
@@ -47,7 +45,7 @@ impl ContextualInformation {
         contextual_information.push_str("User preferred CLIs: ");
         contextual_information.push_str(&format!("{}", &self.configurations.get_preferred_clis()));
         contextual_information.push_str("\n");
-        
+
         Ok(contextual_information)
     }
 }

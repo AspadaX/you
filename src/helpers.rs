@@ -11,7 +11,11 @@ use crate::{
         command_line_explain_agent::CommandLineExplainAgent,
         semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent,
         traits::{AgentExecution, Step},
-    }, configurations::Configurations, information::ContextualInformation, llm::Context, styles::start_spinner
+    },
+    configurations::Configurations,
+    information::ContextualInformation,
+    llm::Context,
+    styles::start_spinner,
 };
 
 /// Prepares and displays a command prompt to the user, asking for confirmation or additional input
@@ -95,7 +99,9 @@ pub fn process_run_with_one_single_instruction(
     Ok(())
 }
 
-pub fn process_interactive_mode(contextual_information_object: &ContextualInformation) -> Result<(), Error> {
+pub fn process_interactive_mode(
+    contextual_information_object: &ContextualInformation,
+) -> Result<(), Error> {
     let mut agent: SemiAutonomousCommandLineAgent =
         SemiAutonomousCommandLineAgent::new(contextual_information_object)?;
     let mut command_store: LLMActionType;
@@ -166,7 +172,10 @@ pub fn process_interactive_mode(contextual_information_object: &ContextualInform
     Ok(())
 }
 
-pub fn process_explanation_with_one_single_instruction(command: &str, contextual_information_object: &ContextualInformation) -> Result<(), Error> {
+pub fn process_explanation_with_one_single_instruction(
+    command: &str,
+    contextual_information_object: &ContextualInformation,
+) -> Result<(), Error> {
     let mut agent = CommandLineExplainAgent::new(contextual_information_object)?;
 
     // Use the user query provided in the `run` argument for the first round

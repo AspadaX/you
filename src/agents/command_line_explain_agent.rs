@@ -3,7 +3,10 @@ use std::fmt::Display;
 use async_openai::types::ChatCompletionRequestMessage;
 use serde::{Deserialize, Serialize};
 
-use crate::{information::ContextualInformation, llm::{Context, FromNaturalLanguageToJSON, LLM}};
+use crate::{
+    information::ContextualInformation,
+    llm::{Context, FromNaturalLanguageToJSON, LLM},
+};
 
 use super::traits::Step;
 
@@ -37,7 +40,7 @@ impl CommandLineExplainAgent {
             "You are an assistant that explains shell commands in simple terms. Please provide a brief explanation for any command given to you.\n\n"
         );
         system_prompt.push_str(&contextual_information_object.get_contextual_information()?);
-        
+
         system_prompt.push_str(&format!(
             "You need to respond json format like this: {}",
             &serde_json::to_string_pretty(&example_data_structure)?
