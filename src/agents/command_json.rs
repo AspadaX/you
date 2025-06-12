@@ -279,7 +279,7 @@ impl Default for ActionTypeExecute {
     fn default() -> Self {
         Self {
             explanation: "explain the shell script briefly. one line maximum. ".to_string(),
-            command: "a shell script, preferrably in one line, to execute.".to_string(),
+            command: "a shell script, preferably in one line, to execute.".to_string(),
         }
     }
 }
