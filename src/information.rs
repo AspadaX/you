@@ -38,7 +38,7 @@ impl ContextualInformation {
         contextual_information.push_str("Current Working Directory: ");
         contextual_information.push_str(std::env::current_dir()?.to_str().unwrap());
         contextual_information.push_str("\n");
-        contextual_information.push_str("Current Working Directory Sturcture: ");
+        contextual_information.push_str("Current Working Directory Structure: ");
         contextual_information.push_str(&self.current_directory_structure);
         contextual_information.push_str("\n");
         contextual_information.push_str("Current Date and Time: ");
