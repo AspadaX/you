@@ -3,7 +3,8 @@ use std::{collections::HashMap, fmt::Display};
 use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs};
 
 use crate::{
-    configurations::Configurations, information::{get_current_directory_structure, get_current_time, get_system_information}, llm::{Context, FromNaturalLanguageToJSON, LLM}
+    information::{get_current_directory_structure, get_current_time, get_system_information, ContextualInformation},
+    llm::{Context, FromNaturalLanguageToJSON, LLM},
 };
 
 use super::{command_json::LLMActionType, traits::Step};
@@ -22,16 +23,12 @@ pub struct SemiAutonomousCommandLineAgent {
 }
 
 impl SemiAutonomousCommandLineAgent {
-    pub fn new(configurations: &Configurations) -> anyhow::Result<Self> {
+    pub fn new(contextual_information_object: &ContextualInformation) -> anyhow::Result<Self> {
         // Setup a command line template for prompting the LLM
         let mut example_env_var: HashMap<String, String> = HashMap::new();
         example_env_var.insert("EXAMPLE".to_string(), "this is a value".to_string());
 
         let command_json_template: String = LLMActionType::get_llm_action_type_prompt_template();
-
-        let system_information: String = get_system_information();
-        let current_time: String = get_current_time();
-        let current_working_directory_structure: String = get_current_directory_structure();
 
         // The system prompt for the LLM
         let mut prompt: String = "Please translate the following command sent by the user to an executable sh command/script in a json.
@@ -39,20 +36,7 @@ impl SemiAutonomousCommandLineAgent {
             .to_string();
 
         // Inject the system information
-        prompt.push_str("Environment:\n");
-        prompt.push_str(&system_information);
-        prompt.push_str("Current Working Directory: ");
-        prompt.push_str(std::env::current_dir()?.to_str().unwrap());
-        prompt.push_str("\n");
-        prompt.push_str("Current Working Directory Sturcture: ");
-        prompt.push_str(&current_working_directory_structure);
-        prompt.push_str("\n");
-        prompt.push_str("Current Date and Time: ");
-        prompt.push_str(&current_time);
-        prompt.push_str("\n");
-        prompt.push_str("User preferred CLIs: ");
-        prompt.push_str(&format!("{}", &configurations.get_preferred_clis()));
-        prompt.push_str("\n");
+        prompt.push_str(&contextual_information_object.get_contextual_information()?);
 
         // Inject the template to the prompt
         prompt.push_str(&format!(

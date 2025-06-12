@@ -3,7 +3,7 @@ use std::fmt::Display;
 use async_openai::types::ChatCompletionRequestMessage;
 use serde::{Deserialize, Serialize};
 
-use crate::llm::{Context, FromNaturalLanguageToJSON, LLM};
+use crate::{information::ContextualInformation, llm::{Context, FromNaturalLanguageToJSON, LLM}};
 
 use super::traits::Step;
 
@@ -26,7 +26,7 @@ pub struct CommandLineExplainAgent {
 }
 
 impl CommandLineExplainAgent {
-    pub fn new() -> anyhow::Result<Self> {
+    pub fn new(contextual_information_object: &ContextualInformation) -> anyhow::Result<Self> {
         let mut context: Vec<ChatCompletionRequestMessage> = Vec::new();
         let example_data_structure = CommandExplained {
             explanation: "explain the command and its arguments briefly. one line maximum."
@@ -36,6 +36,8 @@ impl CommandLineExplainAgent {
         let mut system_prompt: String = format!(
             "You are an assistant that explains shell commands in simple terms. Please provide a brief explanation for any command given to you.\n\n"
         );
+        system_prompt.push_str(&contextual_information_object.get_contextual_information()?);
+        
         system_prompt.push_str(&format!(
             "You need to respond json format like this: {}",
             &serde_json::to_string_pretty(&example_data_structure)?

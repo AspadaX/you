@@ -10,7 +10,7 @@ use super::traits::AgentExecution;
 pub struct CLIToInstall {
     pub cli_name: String,
     pub suggested_installation_command: String,
-    pub additional_notices: Option<String>
+    pub additional_notices: Option<String>,
 }
 
 impl Default for CLIToInstall {
@@ -33,24 +33,24 @@ pub enum LLMActionType {
 
 impl LLMActionType {
     /// The enum `LLMActionType` represents different types of actions that can be performed by an LLM agent.
-    /// 
+    ///
     /// # Variants
-    /// 
+    ///
     /// * `Execute` - Executes a shell command with an explanation.
     /// * `RequestInformation` - Requests additional information from the user.
     /// * `InstallDependencies` - Handles installation of CLI dependencies.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use crate::agents::command_json::{LLMActionType, ActionTypeExecute};
-    /// 
+    ///
     /// // Create an execute action
     /// let action = LLMActionType::Execute(ActionTypeExecute {
     ///     command: "ls -la".to_string(),
     ///     explanation: "List all files in the current directory with details".to_string(),
     /// });
-    /// 
+    ///
     /// // You can use pattern matching to handle different action types
     /// match action {
     ///     LLMActionType::Execute(exec) => println!("Command to execute: {}", exec.get_commands()),
@@ -61,28 +61,35 @@ impl LLMActionType {
     pub fn get_llm_action_type_prompt_template() -> String {
         // We use the default impl to fetch their corresponding prompts
         let execution_template: ActionTypeExecute = ActionTypeExecute::default();
-        let request_information_template: ActionTypeRequestInformation = ActionTypeRequestInformation::default();
-        let request_clis_template: ActionTypeRequestCLIsToInstall = ActionTypeRequestCLIsToInstall::default();
+        let request_information_template: ActionTypeRequestInformation =
+            ActionTypeRequestInformation::default();
+        let request_clis_template: ActionTypeRequestCLIsToInstall =
+            ActionTypeRequestCLIsToInstall::default();
 
         // Convert them into json strings
         let execution_json: String = serde_json::to_string(&execution_template).unwrap_or_default();
-        let request_information_json: String = serde_json::to_string(&request_information_template).unwrap_or_default();
-        let request_clis_json: String = serde_json::to_string(&request_clis_template).unwrap_or_default();
+        let request_information_json: String =
+            serde_json::to_string(&request_information_template).unwrap_or_default();
+        let request_clis_json: String =
+            serde_json::to_string(&request_clis_template).unwrap_or_default();
 
         let mut prompt: String = String::new();
-        prompt.push_str(
-            &format!("To execute a command, you may output: {}", execution_json)
-        );
-        prompt.push_str(
-            &format!("\n\nTo request additional information from the user, you may output: {}", request_information_json)
-        );
-        prompt.push_str(
-            &format!("\n\nIf the command is not found, you may output: {}", request_clis_json)
-        );
+        prompt.push_str(&format!(
+            "To execute a command, you may output: {}",
+            execution_json
+        ));
+        prompt.push_str(&format!(
+            "\n\nTo request additional information from the user, you may output: {}",
+            request_information_json
+        ));
+        prompt.push_str(&format!(
+            "\n\nIf the command is not found, you may output: {}",
+            request_clis_json
+        ));
 
         prompt
     }
-    
+
     /// Returns a formatted prompt string based on the action type for display to the user.
     ///
     /// This method generates appropriate text prompts for different LLM action types:
@@ -113,19 +120,24 @@ impl LLMActionType {
     pub fn fetch_display_prompt(&self) -> String {
         match self {
             Self::Execute(execute_action) => {
-                format!("Your input: (y for executing the command, or type to hint LLM)\n    > {}\n        * {}\n", 
-                    execute_action.command, execute_action.explanation)
-            },
+                format!(
+                    "Your input: (y for executing the command, or type to hint LLM)\n    > {}\n        * {}\n",
+                    execute_action.command, execute_action.explanation
+                )
+            }
             Self::RequestInformation(request_info) => {
                 request_info.request_additional_information.clone()
-            },
+            }
             Self::RequestCLIsToInstall(request_clis) => {
                 let mut prompt: String = String::new();
                 prompt.push_str("The following CLI tools need to be installed:\n\n");
 
                 for cli in &request_clis.request_clis_to_install {
                     prompt.push_str(&format!("Tool: {}\n", cli.cli_name));
-                    prompt.push_str(&format!("Installation Command: {}\n", cli.suggested_installation_command));
+                    prompt.push_str(&format!(
+                        "Installation Command: {}\n",
+                        cli.suggested_installation_command
+                    ));
 
                     if let Some(notice) = &cli.additional_notices {
                         prompt.push_str(&format!("Note: {}\n", notice));
@@ -147,14 +159,12 @@ impl AgentExecution for LLMActionType {
             Self::Execute(execute_action) => {
                 // Execute the command using the Execute action type's implementation
                 execute_action.execute()
-            },
-            Self::RequestInformation(_) => {
-                Err(anyhow!("Cannot execute a request for information"))
-            },
+            }
+            Self::RequestInformation(_) => Err(anyhow!("Cannot execute a request for information")),
             Self::RequestCLIsToInstall(_) => {
                 Err(anyhow!("Cannot execute a request to install CLI tools"))
             }
-        } 
+        }
     }
 }
 
@@ -202,7 +212,8 @@ impl AgentExecution for ActionTypeExecute {
         // Spawn a thread to read stdout
         let tx_clone: std::sync::mpsc::Sender<String> = tx.clone();
         std::thread::spawn(move || {
-            let mut reader: std::io::BufReader<std::process::ChildStdout> = std::io::BufReader::new(stdout);
+            let mut reader: std::io::BufReader<std::process::ChildStdout> =
+                std::io::BufReader::new(stdout);
             let mut buffer: [u8; 1024] = [0; 1024];
             loop {
                 match reader.read(&mut buffer) {
@@ -218,7 +229,8 @@ impl AgentExecution for ActionTypeExecute {
 
         // Spawn a thread to read stderr
         std::thread::spawn(move || {
-            let mut reader: std::io::BufReader<std::process::ChildStderr> = std::io::BufReader::new(stderr);
+            let mut reader: std::io::BufReader<std::process::ChildStderr> =
+                std::io::BufReader::new(stderr);
             let mut buffer: [u8; 1024] = [0; 1024];
             loop {
                 match reader.read(&mut buffer) {
@@ -266,10 +278,8 @@ impl ActionTypeExecute {
 impl Default for ActionTypeExecute {
     fn default() -> Self {
         Self {
-            explanation: "explain the shell script briefly. one line maximum. "
-                .to_string(),
-            command: "a shell script, preferrably in one line, to execute."
-                .to_string(),
+            explanation: "explain the shell script briefly. one line maximum. ".to_string(),
+            command: "a shell script, preferrably in one line, to execute.".to_string(),
         }
     }
 }
@@ -282,19 +292,21 @@ pub struct ActionTypeRequestInformation {
 impl Default for ActionTypeRequestInformation {
     fn default() -> Self {
         Self {
-            request_additional_information: "Describe what information you want the user to add on. "
-                .to_string(),
+            request_additional_information:
+                "Describe what information you want the user to add on. ".to_string(),
         }
     }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ActionTypeRequestCLIsToInstall {
-    request_clis_to_install: Vec<CLIToInstall>
+    request_clis_to_install: Vec<CLIToInstall>,
 }
 
 impl Default for ActionTypeRequestCLIsToInstall {
     fn default() -> Self {
-        Self { request_clis_to_install: vec![CLIToInstall::default()] }
+        Self {
+            request_clis_to_install: vec![CLIToInstall::default()],
+        }
     }
 }

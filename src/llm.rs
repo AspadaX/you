@@ -8,8 +8,8 @@ use async_openai::types::{
 use async_openai::{
     config::OpenAIConfig,
     types::{
-        ChatCompletionRequestUserMessageArgs,
-        CreateChatCompletionRequestArgs, CreateChatCompletionResponse,
+        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
+        CreateChatCompletionResponse,
     },
 };
 use surfing::extract_json_to_string;

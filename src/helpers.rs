@@ -1,22 +1,24 @@
 use anyhow::{Error, Result};
 use cchain::{
     commons::utility::input_message,
-    display_control::{display_message, Level},
+    display_control::{Level, display_message},
 };
 use indicatif::ProgressBar;
 
 use crate::{
     agents::{
-        command_json::{ActionTypeExecute, LLMActionType}, command_line_explain_agent::CommandLineExplainAgent,
-        semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent, traits::{AgentExecution, Step},
-    }, configurations::Configurations, llm::Context, styles::start_spinner
+        command_json::{ActionTypeExecute, LLMActionType},
+        command_line_explain_agent::CommandLineExplainAgent,
+        semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent,
+        traits::{AgentExecution, Step},
+    }, configurations::Configurations, information::ContextualInformation, llm::Context, styles::start_spinner
 };
 
 /// Prepares and displays a command prompt to the user, asking for confirmation or additional input
-/// 
+///
 /// # Arguments
 /// * `command_json` - The command JSON containing the command and its explanation
-/// 
+///
 /// # Returns
 /// * `Result<String>` - The user's input response
 pub fn prompt_user_for_command_execution(command_json: &LLMActionType) -> Result<String> {
@@ -29,7 +31,7 @@ pub fn prompt_user_for_command_execution(command_json: &LLMActionType) -> Result
 
 fn process_command_interaction(
     agent: &mut (impl Context + Step<LLMActionType>),
-    user_prompt: &mut String
+    user_prompt: &mut String,
 ) -> Result<LLMActionType, Error> {
     // Use the user query provided in the `run` argument for the first round
     let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
@@ -50,18 +52,17 @@ fn process_command_interaction(
 }
 
 pub fn process_run_with_one_single_instruction(
-    configurations: &Configurations,
+    contextual_information_object: &ContextualInformation,
     command_in_natural_language: &str,
 ) -> Result<(), Error> {
-    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new(configurations)?;
+    let mut agent: SemiAutonomousCommandLineAgent =
+        SemiAutonomousCommandLineAgent::new(contextual_information_object)?;
     let mut user_prompt: String = String::from(command_in_natural_language);
 
     loop {
         // Process the command interaction
-        let mut command_json: LLMActionType = process_command_interaction(
-            &mut agent, 
-            &mut user_prompt
-        )?;
+        let mut command_json: LLMActionType =
+            process_command_interaction(&mut agent, &mut user_prompt)?;
 
         if user_prompt.trim() == "y" {
             match command_json.execute() {
@@ -94,16 +95,15 @@ pub fn process_run_with_one_single_instruction(
     Ok(())
 }
 
-pub fn process_interactive_mode(configurations: &Configurations) -> Result<(), Error> {
-    let mut agent: SemiAutonomousCommandLineAgent = SemiAutonomousCommandLineAgent::new(configurations)?;
+pub fn process_interactive_mode(contextual_information_object: &ContextualInformation) -> Result<(), Error> {
+    let mut agent: SemiAutonomousCommandLineAgent =
+        SemiAutonomousCommandLineAgent::new(contextual_information_object)?;
     let mut command_store: LLMActionType;
     let mut user_query: String = input_message("Yes, boss. What can I do for you:")?;
 
     loop {
-        let mut command_json: LLMActionType = process_command_interaction(
-            &mut agent, 
-            &mut user_query
-        )?;
+        let mut command_json: LLMActionType =
+            process_command_interaction(&mut agent, &mut user_query)?;
 
         if user_query.trim() == "y" {
             match command_json.execute() {
@@ -166,10 +166,8 @@ pub fn process_interactive_mode(configurations: &Configurations) -> Result<(), E
     Ok(())
 }
 
-pub fn process_explanation_with_one_single_instruction(
-    command: &str,
-) -> Result<(), Error> {
-    let mut agent = CommandLineExplainAgent::new()?;
+pub fn process_explanation_with_one_single_instruction(command: &str, contextual_information_object: &ContextualInformation) -> Result<(), Error> {
+    let mut agent = CommandLineExplainAgent::new(contextual_information_object)?;
 
     // Use the user query provided in the `run` argument for the first round
     let spinner: ProgressBar = start_spinner("LLM is thinking...".to_string());
@@ -180,9 +178,9 @@ pub fn process_explanation_with_one_single_instruction(
 
     // For prompting the LLM and the user
     let command_lines_explanation: String = command_line_explained.to_string() + "\n";
-    
+
     display_message(Level::Logging, &command_lines_explanation);
-    
+
     Ok(())
 }
 
