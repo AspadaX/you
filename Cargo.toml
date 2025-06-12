@@ -1,6 +1,6 @@
 [package]
 name = "you"
-version = "0.1.70"
+version = "0.1.80"
 edition = "2024"
 description = "Translate your natural language into executable command(s)"
 authors =  ["Xinyu Bao <baoxinyuworks@163.com>"]
