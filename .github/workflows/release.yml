@@ -138,9 +138,9 @@ jobs:
           command: "test"
           target: ${{ matrix.platform.target }}
           toolchain: ${{ matrix.toolchain }}
-          args:
+          # args:
             # "--locked --release  --features ${{ steps.set-features-flag-value.outputs.features }}"
-            "--release"
+            # "--release"
         if: ${{ !matrix.platform.skip-tests }}
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
