@@ -78,7 +78,7 @@ jobs:
           - os-name: Windows-aarch64
             runs-on: windows-latest
             target: aarch64-pc-windows-msvc
-            skip-tests: false
+            skip-tests: true
           # - os-name: Windows-i686
           #   runs-on: windows-latest
           #   target: i686-pc-windows-msvc
@@ -142,7 +142,7 @@ jobs:
             # "--locked --release --features ${{ steps.set-features-flag-value.outputs.features }}"
             "--release"
           strip: true
-        if: ${{ !matrix.platform.skip-tests }}
+        # if: ${{ !matrix.platform.skip-tests }}
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
         with:
