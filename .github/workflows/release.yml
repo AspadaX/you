@@ -132,7 +132,7 @@ jobs:
           args:
             # "--locked --release  --features ${{ steps.set-features-flag-value.outputs.features }}"
             "--release"
-        if: matrix.os != 'Windows-aarch64'
+        if: matrix.platform.os-name != 'Windows-aarch64'
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v1
         with:
