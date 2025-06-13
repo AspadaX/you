@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::Local;
 use sysinfo::System;
 
-use crate::configurations::Configurations;
+use crate::{configurations::Configurations, traits::GlobalResourceInitialization};
 
 pub struct ContextualInformation {
     system_information: String,

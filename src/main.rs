@@ -1,11 +1,13 @@
 mod agents;
 mod arguments;
+mod cache;
 mod configurations;
 mod constants;
 mod helpers;
 mod information;
 mod llm;
 mod styles;
+mod traits;
 
 use anyhow::{Error, Result};
 use arguments::{Arguments, Commands};
@@ -18,6 +20,7 @@ use helpers::{
 
 use crate::{
     configurations::Configurations, information::ContextualInformation,
+    traits::GlobalResourceInitialization,
 };
 
 fn main() -> Result<(), Error> {
