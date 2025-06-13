@@ -122,6 +122,15 @@ jobs:
       - name: Maybe install SSL packages
         run: sudo apt-get update --yes && sudo apt-get install --yes pkg-config openssl libssl-dev
         if: matrix.platform.features == 'native-tls'
+      - name: Run tests
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: "test"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args:
+            # "--locked --release  --features ${{ steps.set-features-flag-value.outputs.features }}"
+            "--release"
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v1
         with:
@@ -132,15 +141,6 @@ jobs:
             # "--locked --release --features ${{ steps.set-features-flag-value.outputs.features }}"
             "--release"
           strip: true
-      - name: Run tests
-        uses: houseabsolute/actions-rust-cross@v1
-        with:
-          command: "test"
-          target: ${{ matrix.platform.target }}
-          toolchain: ${{ matrix.toolchain }}
-          # args:
-            # "--locked --release  --features ${{ steps.set-features-flag-value.outputs.features }}"
-            # "--release"
         if: ${{ !matrix.platform.skip-tests }}
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
