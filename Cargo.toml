@@ -1,0 +1,24 @@
+[package]
+name = "you"
+version = "0.1.80"
+edition = "2024"
+description = "Translate your natural language into executable command(s)"
+authors =  ["Xinyu Bao <baoxinyuworks@163.com>"]
+readme = "README.md"
+repository = "https://github.com/aspadax/you"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0.97"
+async-openai = "0.28.0"
+cchain = "0.3.42"
+chrono = "0.4.40"
+clap = { version = "4.5.31", features = ["derive"] }
+console = "0.15.11"
+dirs = "6.0.0"
+indicatif = "0.17.11"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+surfing = "0.1.1"
+sysinfo = "0.33.1"
+tokio = { version = "1.44.0", features = ["rt", "rt-multi-thread"] }

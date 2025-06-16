@@ -1,93 +1,157 @@
-# you
+# You - Your Optimized UNIX (and Windows too)
 
+English | [中文](./README_CN.md)
 
+`you` is a command-line tool that translates natural language instructions into executable shell commands, making command-line operations more accessible and intuitive. It's designed especially for newcomers to command-line interfaces, but also helps experienced users by reducing cognitive load and documentation searches.
 
-## Getting started
+## Core Features
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin http://gitlab.internal.techlab.fun/tools/you.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](http://gitlab.internal.techlab.fun/tools/you/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **Talk in Plain Language**: Just tell the tool what you want to do in regular words, and it turns that into commands the computer understands
+- **Chat Mode**: Have a back-and-forth conversation where you can ask for multiple things while the tool remembers what you talked about before
+- **Command Review**: The tool handles the hard technical stuff but lets you decide when to run commands
+- **Save for Later**: Keep useful commands to use again without having to ask the tool each time
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+
+### Setup Script (Linux & macOS)
+
+Download and run the setup script:
+
+```bash
+curl -O https://raw.githubusercontent.com/AspadaX/you/main/setup.sh && chmod +x ./setup.sh && ./setup.sh && rm ./setup.sh
+```
+
+To update:
+
+```bash
+curl -O https://raw.githubusercontent.com/AspadaX/you/main/update.sh && chmod +x ./update.sh && ./update.sh && rm ./update.sh
+```
+
+To uninstall:
+
+```bash
+curl -O https://raw.githubusercontent.com/AspadaX/you/main/uninstall.sh && chmod +x ./uninstall.sh && ./uninstall.sh && rm ./uninstall.sh
+```
+
+### Using Cargo
+
+If you have Rust installed:
+
+```bash
+cargo install you
+```
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Basic Command Execution
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Run a command described in natural language:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+you run "find the largest file in my downloads directory"
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Command Explanation
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Get an explanation of what a command does:
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```bash
+you explain "find . -type f -name '*.txt' -size +10M"
+```
+
+### Interactive Mode
+
+Start a conversational session to run multiple related commands:
+
+```bash
+you run
+```
+
+### Configure your preferred CLI
+
+You may want to use `fd` over `find`, or prefer using a different CLI rather than letting the LLM guess. In this case, you may update the configuration file located at `~/.you/configurations.json`. Below is an example:
+
+```json
+{
+  "preferred_clis": [
+    {
+      "name": "fd",
+      "preferred_for": "search files. and replace find"
+    }
+  ]
+}
+```
+
+Now, `you` will use `fd` over `find` when you issue commands relevant to searching files. 
+
+## Other Examples
+
+```bash
+# Find files you've modified in the last week
+you run "show me files I've modified in the last 7 days"
+
+# Get system information
+you run "how many CPU cores and how much RAM does this system have?"
+
+# Complex tasks made simple
+you run "compress all JPG images in the current directory and save them to a new folder"
+
+# Remote operations
+you run "connect to my server at 192.168.*.* and check disk space"
+```
+
+## LLM Support
+
+`you` works with various LLMs:
+
+- Works well with small models like `smollm2`
+- Compatible with OpenAI compatible APIs, such as DeepSeek.
+- Compatible with `ollama` for using any open-source model for free
+- Configure your preferred model for the best balance of performance and accuracy
+
+## Workflow
+
+1. Type your request in natural language
+2. Review the suggested command(s) and explanation
+3. Type 'y' to execute or provide additional guidance
+4. If there's an error, the AI automatically suggests a corrected command
+5. Optionally save useful command sequences for future reuse
+
+## Why Use You?
+
+- **Reduce Documentation Searches**: Get the right command without extensive searching
+- **Learning Tool**: See how natural language translates to actual commands
+- **Productivity Boost**: Accomplish complex tasks with simple instructions
+- **Safe Command Execution**: Review commands before execution
+- **Error Recovery**: Get help when commands fail
+- **Context Retention**: In interactive mode, the AI remembers previous commands
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT
+
+## Credits
+
+Created by Xinyu Bao
+
+## Acknowledgments
+
+This project would not be possible without these amazing libraries:
+
+- **anyhow**: Error handling made simple and flexible
+- **async-openai**: API client for interacting with OpenAI's language models
+- **cchain**: Command chaining functionality for shell operations
+- **chrono**: Date and time handling with precision
+- **clap**: Command-line argument parsing with a beautiful interface
+- **console**: Terminal text styling and utilities
+- **indicatif**: Progress indicators for command-line applications
+- **serde/serde_json**: Powerful serialization and deserialization framework
+- **sysinfo**: System information gathering across platforms
+- **tokio**: Asynchronous runtime for efficient operations
+- **surfing**: Parse JSON out of plain texts
+
+A big thank you to all the developers who maintain these open-source libraries!
+
+---
+
+_`you` - because command lines should understand you, not the other way around._
