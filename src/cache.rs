@@ -1,6 +1,10 @@
-use std::{fs::{create_dir, read_dir, DirEntry, File}, io::Write, path::PathBuf};
+use std::{
+    fs::{DirEntry, File, create_dir, read_dir},
+    io::Write,
+    path::PathBuf,
+};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use crate::{
     constants::YOU_CACHE_DIRECTORY,
@@ -38,9 +42,7 @@ impl GlobalResourceInitialization for Cache {
             }
         }
 
-        Ok(
-            Self { scripts }
-        )
+        Ok(Self { scripts })
     }
 }
 
@@ -52,19 +54,20 @@ impl Cache {
                 return Some(&script);
             }
         }
-        
+
         None
     }
-    
+
     pub fn add_new_script(&self, script_name: &str, script_content: &str) -> Result<()> {
         let you_cache_directory: PathBuf = acquire_you_home_directory()?.join(YOU_CACHE_DIRECTORY);
-        
-        let mut file: File = std::fs::File::create_new(you_cache_directory.join(format!("{}.sh", script_name)))?;
+
+        let mut file: File =
+            std::fs::File::create_new(you_cache_directory.join(format!("{}.sh", script_name)))?;
         file.write(script_content.as_bytes())?;
-        
+
         Ok(())
     }
-    
+
     pub fn delete_script(&self, script_name: &str) -> Result<()> {
         for script in self.scripts.iter() {
             let current_script_name: &str = script.file_stem().unwrap().to_str().unwrap();
@@ -73,7 +76,7 @@ impl Cache {
                 break;
             }
         }
-        
+
         Err(anyhow!("Script '{}' not found", script_name))
     }
 }
