@@ -19,9 +19,20 @@ impl Display for PreferredCLI {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Configurations {
+    #[serde(default)]
+    pub enable_cache: bool,
     preferred_clis: Vec<PreferredCLI>,
+}
+
+impl Default for Configurations {
+    fn default() -> Self {
+        Self {
+            enable_cache: false,
+            preferred_clis: vec![],
+        }
+    }
 }
 
 impl Display for Configurations {
