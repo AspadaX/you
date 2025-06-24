@@ -67,6 +67,24 @@ you explain "find . -type f -name '*.txt' -size +10M"
 you run
 ```
 
+### 缓存管理
+
+列出所有缓存的脚本：
+
+```bash
+you list
+# 或使用别名
+you ls
+```
+
+删除特定的缓存脚本：
+
+```bash
+you remove <脚本名称>
+# 或使用别名
+you rm <脚本名称>
+```
+
 ### 配置您偏好的命令行工具
 
 您可能想使用 `fd` 而不是 `find`，或者偏好使用特定的命令行工具而不是让 LLM 猜测。在这种情况下，您可以更新位于 `~/.you/configurations.json` 的配置文件。以下是一个示例：
