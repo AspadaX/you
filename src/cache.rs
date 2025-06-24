@@ -68,12 +68,19 @@ impl Cache {
         Ok(())
     }
 
+    pub fn list_scripts(&self) -> Vec<String> {
+        self.scripts
+            .iter()
+            .map(|script| script.file_stem().unwrap().to_str().unwrap().to_string())
+            .collect()
+    }
+
     pub fn delete_script(&self, script_name: &str) -> Result<()> {
         for script in self.scripts.iter() {
             let current_script_name: &str = script.file_stem().unwrap().to_str().unwrap();
             if current_script_name == script_name {
                 std::fs::remove_file(script)?;
-                break;
+                return Ok(());
             }
         }
 

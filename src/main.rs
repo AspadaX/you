@@ -18,6 +18,7 @@ use cchain::display_control::{Level, display_message};
 use clap::{Parser, crate_authors, crate_description, crate_name, crate_version};
 use helpers::{
     process_explanation_with_one_single_instruction, process_interactive_mode,
+    process_list_cached_scripts, process_remove_cached_script,
     process_run_with_one_single_instruction,
 };
 
@@ -72,6 +73,12 @@ fn main() -> Result<(), Error> {
                 &subcommand.command,
                 &contextual_information,
             )?;
+        }
+        Commands::List(_) => {
+            process_list_cached_scripts(&cache)?;
+        }
+        Commands::Remove(subcommand) => {
+            process_remove_cached_script(&cache, &subcommand.script_name)?;
         }
         Commands::Version(_) => {
             display_message(Level::Logging, &format!("{}", crate_name!()));

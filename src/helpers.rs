@@ -227,6 +227,34 @@ fn save_to_shell(shell_name: &str, execute_action: &mut ActionTypeExecute) -> Re
     Ok(())
 }
 
+pub fn process_list_cached_scripts(cache: &Cache) -> Result<(), Error> {
+    let scripts: Vec<String> = cache.list_scripts();
+    
+    if scripts.is_empty() {
+        display_message(Level::Logging, "No cached scripts found.");
+    } else {
+        display_message(Level::Logging, "Cached scripts:");
+        for script in scripts {
+            display_message(Level::Logging, &format!("  - {}", script));
+        }
+    }
+    
+    Ok(())
+}
+
+pub fn process_remove_cached_script(cache: &Cache, script_name: &str) -> Result<(), Error> {
+    match cache.delete_script(script_name) {
+        Ok(_) => {
+            display_message(Level::Logging, &format!("Script '{}' has been removed from cache.", script_name));
+        }
+        Err(e) => {
+            display_message(Level::Error, &e.to_string());
+        }
+    }
+    
+    Ok(())
+}
+
 fn save_to_shell_in_cache(
     cache: &Cache,
     shell_name: &str,
