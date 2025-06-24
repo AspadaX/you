@@ -33,7 +33,7 @@ fn main() -> Result<(), Error> {
     Configurations::initialize()?;
     Cache::initialize()?;
 
-    let cache: Cache = Cache::load()?;
+    let mut cache: Cache = Cache::load()?;
     let contextual_information: ContextualInformation = ContextualInformation::new()?;
     let configurations: Configurations = Configurations::load()?;
 
@@ -58,7 +58,7 @@ fn main() -> Result<(), Error> {
                 }
 
                 process_run_with_one_single_instruction(
-                    &cache,
+                    &mut cache,
                     &configurations,
                     &contextual_information,
                     &command_in_natural_language,
@@ -66,7 +66,7 @@ fn main() -> Result<(), Error> {
                 return Ok(());
             }
 
-            process_interactive_mode(&cache, &configurations, &contextual_information)?;
+            process_interactive_mode(&mut cache, &configurations, &contextual_information)?;
         }
         Commands::Explain(subcommand) => {
             process_explanation_with_one_single_instruction(
@@ -78,7 +78,7 @@ fn main() -> Result<(), Error> {
             process_list_cached_scripts(&cache)?;
         }
         Commands::Remove(subcommand) => {
-            process_remove_cached_script(&cache, &subcommand.script_name)?;
+            process_remove_cached_script(&mut cache, &subcommand.script_name)?;
         }
         Commands::Version(_) => {
             display_message(Level::Logging, &format!("{}", crate_name!()));

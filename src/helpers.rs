@@ -57,7 +57,7 @@ fn process_command_interaction(
 }
 
 pub fn process_run_with_one_single_instruction(
-    cache: &Cache,
+    cache: &mut Cache,
     configurations: &Configurations,
     contextual_information_object: &ContextualInformation,
     command_in_natural_language: &str,
@@ -88,7 +88,7 @@ pub fn process_run_with_one_single_instruction(
                     if let LLMActionType::Execute(ref mut execute_action) = command_json {
                         if configurations.enable_cache {
                             save_to_shell_in_cache(
-                                &cache,
+                                cache,
                                 save_shell_input.trim(),
                                 execute_action,
                             )?;
@@ -113,7 +113,7 @@ pub fn process_run_with_one_single_instruction(
 }
 
 pub fn process_interactive_mode(
-    cache: &Cache,
+    cache: &mut Cache,
     configurations: &Configurations,
     contextual_information_object: &ContextualInformation,
 ) -> Result<(), Error> {
@@ -154,7 +154,7 @@ pub fn process_interactive_mode(
                         // Extract command if it's an Execute action type
                         if let LLMActionType::Execute(ref mut execute_action) = command_store {
                             if configurations.enable_cache {
-                                save_to_shell_in_cache(&cache, name.trim(), execute_action)?;
+                                save_to_shell_in_cache(cache, name.trim(), execute_action)?;
                                 break;
                             }
 
@@ -242,7 +242,7 @@ pub fn process_list_cached_scripts(cache: &Cache) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn process_remove_cached_script(cache: &Cache, script_name: &str) -> Result<(), Error> {
+pub fn process_remove_cached_script(cache: &mut Cache, script_name: &str) -> Result<(), Error> {
     match cache.delete_script(script_name) {
         Ok(_) => {
             display_message(Level::Logging, &format!("Script '{}' has been removed from cache.", script_name));
@@ -256,7 +256,7 @@ pub fn process_remove_cached_script(cache: &Cache, script_name: &str) -> Result<
 }
 
 fn save_to_shell_in_cache(
-    cache: &Cache,
+    cache: &mut Cache,
     shell_name: &str,
     execute_action: &mut ActionTypeExecute,
 ) -> Result<(), Error> {
