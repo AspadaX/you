@@ -33,11 +33,11 @@ pub enum Commands {
     /// Explain a given command
     #[clap(short_flag = 'e')]
     Explain(ExplainArguments),
-    /// List all saved scripts in the cache. `ls` for short
-    #[clap(alias = "ls")]
+    /// List all saved scripts in the cache. 
+    #[clap(visible_alias = "ls")]
     List(ListArguments),
-    /// Remove a specified script from the cache. `rm` for short
-    #[clap(alias = "rm")]
+    /// Remove a specified script from the cache. 
+    #[clap(visible_alias = "rm")]
     Remove(RemoveArguments),
     /// Display the version of `you`
     #[clap(short_flag = 'v')]
