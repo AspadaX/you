@@ -102,6 +102,22 @@ You may want to use `fd` over `find`, or prefer using a different CLI rather tha
 
 Now, `you` will use `fd` over `find` when you issue commands relevant to searching files. 
 
+### Enable Cache
+
+If you would like to enable cache feature, you may also want to enable it in the `~/.you/configurations.json`:
+
+```json
+{
+  "enable_cache": true,
+  "preferred_clis": [
+    {
+      "name": "fd",
+      "preferred_for": "search files. and replace find"
+    }
+  ]
+}
+```
+
 ## Other Examples
 
 ```bash
