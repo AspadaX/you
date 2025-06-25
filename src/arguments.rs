@@ -28,13 +28,15 @@ pub struct Arguments {
 pub enum Commands {
     /// Run a command that is described in natural langauge.
     /// The LLM will breakdown the task and executes them.
+    #[clap(short_flag = 'r')]
     Run(RunArguments),
     /// Explain a given command
+    #[clap(short_flag = 'e')]
     Explain(ExplainArguments),
-    /// List all saved scripts in the cache
+    /// List all saved scripts in the cache. `ls` for short
     #[clap(alias = "ls")]
     List(ListArguments),
-    /// Remove a specified script from the cache
+    /// Remove a specified script from the cache. `rm` for short
     #[clap(alias = "rm")]
     Remove(RemoveArguments),
     /// Display the version of `you`
