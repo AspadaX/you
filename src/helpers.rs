@@ -12,6 +12,7 @@ use crate::{
         semi_autonomous_command_line_agent::SemiAutonomousCommandLineAgent,
         traits::{AgentExecution, Step},
     },
+    cache::Cache,
     configurations::Configurations,
     information::ContextualInformation,
     llm::Context,
@@ -56,6 +57,8 @@ fn process_command_interaction(
 }
 
 pub fn process_run_with_one_single_instruction(
+    cache: &mut Cache,
+    configurations: &Configurations,
     contextual_information_object: &ContextualInformation,
     command_in_natural_language: &str,
 ) -> Result<(), Error> {
@@ -83,8 +86,18 @@ pub fn process_run_with_one_single_instruction(
 
                     // Extract command if it's an Execute action type
                     if let LLMActionType::Execute(ref mut execute_action) = command_json {
+                        if configurations.enable_cache {
+                            save_to_shell_in_cache(
+                                cache,
+                                save_shell_input.trim(),
+                                execute_action,
+                            )?;
+                            break;
+                        }
+
                         save_to_shell(save_shell_input.trim(), execute_action)?;
                     }
+
                     break;
                 }
                 Err(error) => {
@@ -100,6 +113,8 @@ pub fn process_run_with_one_single_instruction(
 }
 
 pub fn process_interactive_mode(
+    cache: &mut Cache,
+    configurations: &Configurations,
     contextual_information_object: &ContextualInformation,
 ) -> Result<(), Error> {
     let mut agent: SemiAutonomousCommandLineAgent =
@@ -138,6 +153,11 @@ pub fn process_interactive_mode(
 
                         // Extract command if it's an Execute action type
                         if let LLMActionType::Execute(ref mut execute_action) = command_store {
+                            if configurations.enable_cache {
+                                save_to_shell_in_cache(cache, name.trim(), execute_action)?;
+                                break;
+                            }
+
                             save_to_shell(name.trim(), execute_action)?;
                         }
 
@@ -203,6 +223,48 @@ fn save_to_shell(shell_name: &str, execute_action: &mut ActionTypeExecute) -> Re
         Level::Logging,
         &format!("Shell had been saved to {}.", filepath),
     );
+
+    Ok(())
+}
+
+pub fn process_list_cached_scripts(cache: &Cache) -> Result<(), Error> {
+    let scripts: Vec<String> = cache.list_scripts();
+    
+    if scripts.is_empty() {
+        display_message(Level::Logging, "No cached scripts found.");
+    } else {
+        display_message(Level::Logging, "Cached scripts:");
+        for script in scripts {
+            display_message(Level::Logging, &format!("  - {}", script));
+        }
+    }
+    
+    Ok(())
+}
+
+pub fn process_remove_cached_script(cache: &mut Cache, script_name: &str) -> Result<(), Error> {
+    match cache.delete_script(script_name) {
+        Ok(_) => {
+            display_message(Level::Logging, &format!("Script '{}' has been removed from cache.", script_name));
+        }
+        Err(e) => {
+            display_message(Level::Error, &e.to_string());
+        }
+    }
+    
+    Ok(())
+}
+
+fn save_to_shell_in_cache(
+    cache: &mut Cache,
+    shell_name: &str,
+    execute_action: &mut ActionTypeExecute,
+) -> Result<(), Error> {
+    let mut file_content: String = String::from("#!/usr/bin/env sh\n");
+    file_content.push_str(execute_action.get_commands());
+
+    cache.add_new_script(shell_name, &file_content)?;
+    display_message(Level::Logging, "Shell had been saved to the cache.");
 
     Ok(())
 }

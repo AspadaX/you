@@ -28,9 +28,17 @@ pub struct Arguments {
 pub enum Commands {
     /// Run a command that is described in natural langauge.
     /// The LLM will breakdown the task and executes them.
+    #[clap(short_flag = 'r')]
     Run(RunArguments),
     /// Explain a given command
+    #[clap(short_flag = 'e')]
     Explain(ExplainArguments),
+    /// List all saved scripts in the cache. 
+    #[clap(visible_alias = "ls")]
+    List(ListArguments),
+    /// Remove a specified script from the cache. 
+    #[clap(visible_alias = "rm")]
+    Remove(RemoveArguments),
     /// Display the version of `you`
     #[clap(short_flag = 'v')]
     Version(VersionArguments),
@@ -50,6 +58,18 @@ pub struct ExplainArguments {
     /// Convert natural language instruction to an executable command. Leave it empty to run interactive mode.
     #[arg(group = "sources")]
     pub command: String,
+}
+
+#[derive(Debug, Args)]
+#[command(group = clap::ArgGroup::new("sources").required(false).multiple(false))]
+pub struct ListArguments;
+
+#[derive(Debug, Args)]
+#[command(group = clap::ArgGroup::new("sources").required(true).multiple(false))]
+pub struct RemoveArguments {
+    /// Name of the script to remove from cache
+    #[arg(group = "sources")]
+    pub script_name: String,
 }
 
 #[derive(Debug, Args)]

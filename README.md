@@ -67,6 +67,24 @@ Start a conversational session to run multiple related commands:
 you run
 ```
 
+### Cache Management
+
+List all cached scripts:
+
+```bash
+you list
+# or use the alias
+you ls
+```
+
+Remove a specific cached script:
+
+```bash
+you remove <script_name>
+# or use the alias
+you rm <script_name>
+```
+
 ### Configure your preferred CLI
 
 You may want to use `fd` over `find`, or prefer using a different CLI rather than letting the LLM guess. In this case, you may update the configuration file located at `~/.you/configurations.json`. Below is an example:
