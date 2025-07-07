@@ -43,6 +43,18 @@ cargo install you
 
 ## Usage
 
+### About Setting Up the LLM
+
+By default, the environment variables in your `~/.zshrc` (for zsh, primarily macOS), or `~/.bashrc` (for bash, most Linux systems), should look like this:
+```bash
+export YOU_OPENAI_API_BASE="https://api.openai.com/v1"
+export YOU_OPENAI_API_KEY="sk-yourapikey"
+export YOU_OPENAI_MODEL="gpt-4.1" # model you want to use
+```
+Notice that for all OpenAI-compatible API bases, it needs to end with a `/v1`. If adding `v1` does not work, then you might want to remove it. 
+
+For Ollama users, you will also need the `/v1` at the end of the url. For example, if your endpoint is `http://localhost:11434`, then you probably need to put `http://localhost:11434/v1`. 
+
 ### Basic Command Execution
 
 Run a command described in natural language:
