@@ -43,6 +43,18 @@ cargo install you
 
 ## 使用方法
 
+### 关于设置 LLM
+
+默认情况下，您的 `~/.zshrc`（对于 zsh，主要是 macOS）或 `~/.bashrc`（对于 bash，大多数 Linux 系统）中的环境变量应该如下所示：
+```bash
+export YOU_OPENAI_API_BASE="https://api.openai.com/v1"
+export YOU_OPENAI_API_KEY="sk-yourapikey"
+export YOU_OPENAI_MODEL="gpt-4.1" # 您想要使用的模型
+```
+请注意，对于所有 OpenAI 兼容的 API 基础地址，它需要以 `/v1` 结尾。如果添加 `v1` 不起作用，那么您可能需要删除它。
+
+对于 Ollama 用户，您也需要在 URL 末尾添加 `/v1`。例如，如果您的端点是 `http://localhost:11434`，那么您可能需要设置为 `http://localhost:11434/v1`。
+
 ### 基本命令执行
 
 运行用自然语言描述的命令：
@@ -101,6 +113,22 @@ you rm <脚本名称>
 ```
 
 现在，当您发出与搜索文件相关的命令时，`you` 将使用 `fd` 而不是 `find`。
+
+### 启用缓存
+
+如果您想启用缓存功能，您也可以在 `~/.you/configurations.json` 中启用它：
+
+```json
+{
+  "enable_cache": true,
+  "preferred_clis": [
+    {
+      "name": "fd",
+      "preferred_for": "search files. and replace find"
+    }
+  ]
+}
+```
 
 ## 其他示例
 
@@ -169,7 +197,3 @@ MIT
 - **surfing**：从纯文本中解析 JSON
 
 衷心感谢所有维护这些开源库的开发者！
-
----
-
-_`you` - 因为命令行应该理解您，而不是相反。_

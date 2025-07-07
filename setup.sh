@@ -163,10 +163,10 @@ else
 fi
 
 # Assist the user to setup required environment variables
-ENDPOINT="https://api.openai.com"
+ENDPOINT="https://api.openai.com/v1"
 read -p "Use default OpenAI endpoint? (y for yes, or paste your api endpoint here): " USER_INPUT
 if [[ "$USER_INPUT" == "y" ]]; then
-    ENDPOINT="https://api.openai.com"
+    ENDPOINT="https://api.openai.com/v1"
 else
     ENDPOINT="$USER_INPUT"
 fi
