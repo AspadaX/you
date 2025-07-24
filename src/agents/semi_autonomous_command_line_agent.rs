@@ -3,10 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs};
 
 use crate::{
-    information::{
-        ContextualInformation, get_current_directory_structure, get_current_time,
-        get_system_information,
-    },
+    information::ContextualInformation,
     llm::{Context, FromNaturalLanguageToJSON, LLM},
 };
 
